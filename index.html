@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>CryptoTapZone</title>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <style>
       html, body {
         margin: 0;
@@ -13,18 +13,19 @@
         background: #fff;
         overflow: hidden;
       }
-     #signal-box {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(255,255,255,0.95);
-  padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  z-index: 10;
-}
 
+      #signal-box {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        z-index: 10;
+        cursor: move; /* ड्रॅग करता येईल */
       }
+
       #tradingview_chart {
         position: absolute;
         top: 0;
@@ -35,6 +36,7 @@
       }
     </style>
   </head>
+
   <body>
 
     <!-- Signal Display Box -->
@@ -69,7 +71,7 @@
       });
     </script>
 
-    <!-- Live Signal Script -->
+    <!-- Live Signal Fetcher -->
     <script>
       async function fetchSignal() {
         try {
@@ -102,7 +104,31 @@
       }
 
       fetchSignal();
-      setInterval(fetchSignal, 60000); // Refresh every minute
+      setInterval(fetchSignal, 60000); // refresh every minute
+    </script>
+
+    <!-- Draggable Box Code -->
+    <script>
+      const box = document.getElementById("signal-box");
+      let isDragging = false, offsetX, offsetY;
+
+      box.addEventListener("mousedown", function(e) {
+        isDragging = true;
+        offsetX = e.clientX - box.offsetLeft;
+        offsetY = e.clientY - box.offsetTop;
+      });
+
+      document.addEventListener("mousemove", function(e) {
+        if (isDragging) {
+          box.style.left = (e.clientX - offsetX) + "px";
+          box.style.top = (e.clientY - offsetY) + "px";
+          box.style.bottom = "auto"; // reset bottom
+        }
+      });
+
+      document.addEventListener("mouseup", function() {
+        isDragging = false;
+      });
     </script>
 
   </body>
