@@ -18,12 +18,13 @@
         position: absolute;
         bottom: 10px;
         left: 10px;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255,255,255,0.95);
         padding: 15px 20px;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
         z-index: 10;
-        cursor: move; /* ड्रॅग करता येईल */
+        cursor: move;
+        touch-action: none; /* mobile drag fix */
       }
 
       #tradingview_chart {
@@ -39,7 +40,7 @@
 
   <body>
 
-    <!-- Signal Display Box -->
+    <!-- Signal Box -->
     <div id="signal-box">
       <h3>📊 Signal: <span id="signal">Loading...</span></h3>
       <p><strong>Entry:</strong> <span id="entry">--</span></p>
@@ -71,7 +72,7 @@
       });
     </script>
 
-    <!-- Live Signal Fetcher -->
+    <!-- Signal Fetcher -->
     <script>
       async function fetchSignal() {
         try {
@@ -104,71 +105,49 @@
       }
 
       fetchSignal();
-      setInterval(fetchSignal, 60000); // refresh every minute
+      setInterval(fetchSignal, 60000);
     </script>
-<script>
-  const box = document.getElementById("signal-box");
-  let isDragging = false, offsetX, offsetY;
 
-  // 🖱️ Mouse Events
-  box.addEventListener("mousedown", function (e) {
-    isDragging = true;
-    offsetX = e.clientX - box.offsetLeft;
-    offsetY = e.clientY - box.offsetTop;
-  });
+    <!-- Draggable for Desktop + Mobile -->
+    <script>
+      const box = document.getElementById("signal-box");
+      let isDragging = false, offsetX, offsetY;
 
-  document.addEventListener("mousemove", function (e) {
-    if (isDragging) {
-      box.style.left = (e.clientX - offsetX) + "px";
-      box.style.top = (e.clientY - offsetY) + "px";
-      box.style.bottom = "auto";
-    }
-  });
-
-  document.addEventListener("mouseup", function () {
-    isDragging = false;
-  });
-
-  // 📱 Touch Events
-  box.addEventListener("touchstart", function (e) {
-    isDragging = true;
-    const touch = e.touches[0];
-    offsetX = touch.clientX - box.offsetLeft;
-    offsetY = touch.clientY - box.offsetTop;
-  });
-
-  document.addEventListener("touchmove", function (e) {
-    if (isDragging) {
-      const touch = e.touches[0];
-      box.style.left = (touch.clientX - offsetX) + "px";
-      box.style.top = (touch.clientY - offsetY) + "px";
-      box.style.bottom = "auto";
-    }
-  });
-
-  document.addEventListener("touchend", function () {
-    isDragging = false;
-  });
-</script>
-
-
-      box.addEventListener("mousedown", function(e) {
+      // Desktop
+      box.addEventListener("mousedown", e => {
         isDragging = true;
         offsetX = e.clientX - box.offsetLeft;
         offsetY = e.clientY - box.offsetTop;
       });
 
-      document.addEventListener("mousemove", function(e) {
+      document.addEventListener("mousemove", e => {
         if (isDragging) {
           box.style.left = (e.clientX - offsetX) + "px";
           box.style.top = (e.clientY - offsetY) + "px";
-          box.style.bottom = "auto"; // reset bottom
+          box.style.bottom = "auto";
         }
       });
 
-      document.addEventListener("mouseup", function() {
-        isDragging = false;
+      document.addEventListener("mouseup", () => isDragging = false);
+
+      // Mobile Touch
+      box.addEventListener("touchstart", e => {
+        isDragging = true;
+        const touch = e.touches[0];
+        offsetX = touch.clientX - box.offsetLeft;
+        offsetY = touch.clientY - box.offsetTop;
       });
+
+      document.addEventListener("touchmove", e => {
+        if (isDragging) {
+          const touch = e.touches[0];
+          box.style.left = (touch.clientX - offsetX) + "px";
+          box.style.top = (touch.clientY - offsetY) + "px";
+          box.style.bottom = "auto";
+        }
+      });
+
+      document.addEventListener("touchend", () => isDragging = false);
     </script>
 
   </body>
