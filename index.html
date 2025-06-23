@@ -51,3 +51,25 @@
     <!-- End TradingView Widget -->
   </body>
 </html>
+<!-- Signal Display -->
+<div id="signal-box" style="padding: 20px; font-family: Arial; background: #f9f9f9;">
+  <h2>📈 Latest Signal: <span id="signal-type">Loading...</span></h2>
+  <p><strong>Entry:</strong> <span id="entry-price">--</span></p>
+  <p><strong>Stop Loss:</strong> <span id="stop-loss">--</span></p>
+  <p><strong>Target:</strong> <span id="target-price">--</span></p>
+</div>
+
+<script>
+  // Static Example - Replace with real data later
+  const signal = {
+    type: "Buy",        // Or "Sell"
+    entry: 62450,       // Example price
+    stopLoss: 61800,    // Example SL
+    target: 63500       // Example target
+  };
+
+  document.getElementById("signal-type").innerText = signal.type;
+  document.getElementById("entry-price").innerText = signal.entry;
+  document.getElementById("stop-loss").innerText = signal.stopLoss;
+  document.getElementById("target-price").innerText = signal.target;
+</script>
