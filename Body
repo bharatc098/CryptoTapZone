@@ -1,23 +1,99 @@
-<!-- TradingView Widget BEGIN -->
-<div class="tradingview-widget-container">
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script type="text/javascript">
-    new TradingView.widget({
-      "width": "100%",
-      "height": 500,
-      "symbol": "BINANCE:BTCUSDT",
-      "interval": "15",
-      "timezone": "Asia/Kolkata",
-      "theme": "light",
-      "style": "1",
-      "locale": "en",
-      "toolbar_bg": "#f1f3f6",
-      "enable_publishing": false,
-      "hide_legend": false,
-      "save_image": false,
-      "studies": ["MAExp@tv-basicstudies"],  // We'll change this to SMA 44 in next step
-      "container_id": "tradingview_01"
-    });
-  </script>
-</div>
-<!-- TradingView Widget END -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CryptoTapZone</title>
+    <meta charset="UTF-8">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .chart-container {
+        height: 80vh;
+        width: 100vw;
+      }
+      #signal-box {
+        background: #f1f1f1;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- TradingView Chart -->
+    <div class="chart-container">
+      <div id="tradingview_chart"></div>
+    </div>
+
+    <!-- Signal Section -->
+    <div id="signal-box">
+      <h2>📊 Signal: <span id="signal">Loading...</span></h2>
+      <p><strong>Entry:</strong> <span id="entry">--</span></p>
+      <p><strong>Stop Loss:</strong> <span id="sl">--</span></p>
+      <p><strong>Target:</strong> <span id="target">--</span></p>
+    </div>
+
+    <!-- TradingView Script -->
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+      new TradingView.widget({
+        container_id: "tradingview_chart",
+        width: "100%",
+        height: "100%",
+        symbol: "BINANCE:BTCUSDT",
+        interval: "1",
+        timezone: "Asia/Kolkata",
+        theme: "light",
+        style: "1",
+        locale: "en",
+        toolbar_bg: "#f1f3f6",
+        enable_publishing: false,
+        allow_symbol_change: true,
+        studies: ["MASimple@tv-basicstudies"],
+        overrides: {
+          "moving average.length": 44
+        }
+      });
+    </script>
+
+    <!-- Signal JavaScript -->
+    <script>
+      async function fetchSignal() {
+        try {
+          const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
+          const data = await res.json();
+          const closes = data.map(item => parseFloat(item[4]));
+          const latest = closes[closes.length - 1];
+          const sma = closes.slice(-44).reduce((a, b) => a + b) / 44;
+
+          let signal = "No Signal";
+          let sl = "--";
+          let target = "--";
+
+          if (latest > sma) {
+            signal = "Buy";
+            sl = (latest * 0.99).toFixed(2);
+            target = (latest * 1.02).toFixed(2);
+          } else if (latest < sma) {
+            signal = "Sell";
+            sl = (latest * 1.01).toFixed(2);
+            target = (latest * 0.98).toFixed(2);
+          }
+
+          document.getElementById("signal").innerText = signal;
+          document.getElementById("entry").innerText = latest.toFixed(2);
+          document.getElementById("sl").innerText = sl;
+          document.getElementById("target").innerText = target;
+
+        } catch (error) {
+          document.getElementById("signal").innerText = "Error loading";
+        }
+      }
+
+      fetchSignal();
+      setInterval(fetchSignal, 60000);
+    </script>
+
+  </body>
+</html>
