@@ -4,85 +4,6 @@
     <title>CryptoTapZone</title>
     <meta charset="UTF-8" />
     <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-      }
-      .tradingview-widget-container {
-        height: 100%;
-        width: 100%;
-      }
-      #tradingview_44sma {
-        height: 100%;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- TradingView Widget -->
-    <div class="tradingview-widget-container">
-      <div id="tradingview_44sma"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-      <script type="text/javascript">
-        new TradingView.widget({
-          container_id: "tradingview_44sma",
-          width: "100%",
-          height: "100%",
-          symbol: "BINANCE:BTCUSDT",
-          interval: "15",
-          timezone: "Etc/UTC",
-          theme: "light",
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#f1f3f6",
-          enable_publishing: false,
-          hide_side_toolbar: false,
-          allow_symbol_change: true,
-          studies: ["MAExp@tv-basicstudies"],
-          overrides: {
-            "moving average.length": 44,
-            "moving average.type": "SMA"
-          }
-        });
-      </script>
-    </div>
-    <!-- End TradingView Widget -->
-  </body>
-</html>
-<!-- Signal Display -->
-<div id="signal-box" style="padding: 20px; font-family: Arial; background: #f9f9f9;">
-  <h2>📈 Latest Signal: <span id="signal-type">Loading...</span></h2>
-  <p><strong>Entry:</strong> <span id="entry-price">--</span></p>
-  <p><strong>Stop Loss:</strong> <span id="stop-loss">--</span></p>
-  <p><strong>Target:</strong> <span id="target-price">--</span></p>
-</div>
-
-<script>
-  // Static Example - Replace with real data later
-  const signal = {
-    type: "Buy",        // Or "Sell"
-    entry: 62450,       // Example price
-    stopLoss: 61800,    // Example SL
-    target: 63500       // Example target
-  };
-
-  document.getElementById("signal-type").innerText = signal.type;
-  document.getElementById("entry-price").innerText = signal.entry;
-  document.getElementById("stop-loss").innerText = signal.stopLoss;
-  document.getElementById("target-price").innerText = signal.target;
-</script>
-📈 Latest Signal: Buy
-Entry: 62450
-Stop Loss: 61800
-Target: 63500
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>CryptoTapZone</title>
-    <meta charset="UTF-8" />
-    <style>
       * {
         margin: 0;
         padding: 0;
@@ -98,7 +19,7 @@ Target: 63500
         width: 100vw;
       }
       #signal-box {
-        padding: 15px;
+        padding: 20px;
         background: #f1f1f1;
       }
     </style>
@@ -132,7 +53,7 @@ Target: 63500
       </script>
     </div>
 
-    <!-- Signal Output -->
+    <!-- Signal Display -->
     <div id="signal-box">
       <h2>📈 Signal: <span id="signal">Loading...</span></h2>
       <p><strong>Entry:</strong> <span id="entry">--</span></p>
@@ -140,44 +61,43 @@ Target: 63500
       <p><strong>Target:</strong> <span id="target">--</span></p>
     </div>
 
-    <!-- Live Price & Signal Calculation -->
+    <!-- JS for Signal Calculation -->
     <script>
       async function fetchData() {
         try {
           const response = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
           const data = await response.json();
-
           const closes = data.map(candle => parseFloat(candle[4]));
           const latest = closes[closes.length - 1];
-          const sma = closes.slice(-44).reduce((a, b) => a + b) / 44;
+          const sma = closes.slice(-44).reduce((a, b) => a + b, 0) / 44;
 
           let signal = "No Signal";
-          let entry = latest;
+          let entry = latest.toFixed(2);
           let sl = "--";
           let target = "--";
 
           if (latest > sma) {
             signal = "Buy";
-            sl = (entry * 0.99).toFixed(2);
-            target = (entry * 1.02).toFixed(2);
+            sl = (latest * 0.99).toFixed(2);
+            target = (latest * 1.02).toFixed(2);
           } else if (latest < sma) {
             signal = "Sell";
-            sl = (entry * 1.01).toFixed(2);
-            target = (entry * 0.98).toFixed(2);
+            sl = (latest * 1.01).toFixed(2);
+            target = (latest * 0.98).toFixed(2);
           }
 
           document.getElementById("signal").innerText = signal;
-          document.getElementById("entry").innerText = entry.toFixed(2);
+          document.getElementById("entry").innerText = entry;
           document.getElementById("sl").innerText = sl;
           document.getElementById("target").innerText = target;
 
-        } catch (e) {
-          document.getElementById("signal").innerText = "Error loading";
+        } catch (err) {
+          document.getElementById("signal").innerText = "Error fetching data";
         }
       }
 
       fetchData();
-      setInterval(fetchData, 60000); // update every 1 minute
+      setInterval(fetchData, 60000); // Update every 1 minute
     </script>
 
   </body>
