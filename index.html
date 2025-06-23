@@ -3,11 +3,24 @@
   <head>
     <title>CryptoTapZone</title>
     <meta charset="UTF-8" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      .tradingview-widget-container {
+        height: 100%;
+        width: 100%;
+      }
+      #tradingview_44sma {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
   </head>
   <body>
-    <h1>Welcome to CryptoTapZone</h1>
-    <p>This website will soon show Buy/Sell signals using 44 SMA strategy.</p>
-
     <!-- TradingView Widget -->
     <div class="tradingview-widget-container">
       <div id="tradingview_44sma"></div>
@@ -15,29 +28,8 @@
       <script type="text/javascript">
         new TradingView.widget({
           container_id: "tradingview_44sma",
-      <script type="text/javascript">
-  new TradingView.widget({
-    container_id: "tradingview_44sma",
-    width: "100%",
-    height: "600",  // ← येथे तुम्हाला हवे तसे उंची वाढवा
-    symbol: "BINANCE:BTCUSDT",
-    interval: "15",
-    timezone: "Etc/UTC",
-    theme: "light",
-    style: "1",
-    locale: "en",
-    toolbar_bg: "#f1f3f6",
-    enable_publishing: false,
-    hide_side_toolbar: false,
-    allow_symbol_change: true,
-    studies: ["MAExp@tv-basicstudies"],
-    overrides: {
-      "moving average.length": 44,
-      "moving average.type": "SMA"
-    }
-  });
-</script>
-      
+          width: "100%",
+          height: "100%",
           symbol: "BINANCE:BTCUSDT",
           interval: "15",
           timezone: "Etc/UTC",
