@@ -31,6 +31,7 @@
       max-width: 90vw;
       min-height: 100px;
       max-height: 90vh;
+      box-sizing: border-box; /* Added this line */
     }
 
     #tradingview_chart {
@@ -128,8 +129,9 @@
 
     function resizeBox(action) {
       const box = document.getElementById("signal-box");
-      const currentWidth = box.offsetWidth;
-      const currentHeight = box.offsetHeight;
+      const style = window.getComputedStyle(box);
+      const currentWidth = parseFloat(style.width);
+      const currentHeight = parseFloat(style.height);
       const change = 20;
 
       const minWidth = 180;
@@ -137,17 +139,19 @@
       const minHeight = 100;
       const maxHeight = window.innerHeight * 0.9;
 
+      let newWidth = currentWidth;
+      let newHeight = currentHeight;
+
       if (action === "increase") {
-        let newWidth = Math.min(currentWidth + change, maxWidth);
-        let newHeight = Math.min(currentHeight + change, maxHeight);
-        box.style.width = newWidth + "px";
-        box.style.height = newHeight + "px";
+        newWidth = Math.min(currentWidth + change, maxWidth);
+        newHeight = Math.min(currentHeight + change, maxHeight);
       } else if (action === "decrease") {
-        let newWidth = Math.max(currentWidth - change, minWidth);
-        let newHeight = Math.max(currentHeight - change, minHeight);
-        box.style.width = newWidth + "px";
-        box.style.height = newHeight + "px";
+        newWidth = Math.max(currentWidth - change, minWidth);
+        newHeight = Math.max(currentHeight - change, minHeight);
       }
+
+      box.style.width = newWidth + "px";
+      box.style.height = newHeight + "px";
     }
   </script>
 
