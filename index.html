@@ -1,146 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>CryptoTapZone</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        width: 100%;
-        font-family: Arial, sans-serif;
-        background: #fff;
-        overflow: hidden;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>CryptoTapZone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      overflow: hidden;
+    }
 
-      #signal-box {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        background: rgba(255,255,255,0.95);
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        z-index: 10;
-        cursor: move;
-        touch-action: none;
+    #signal-box {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 10;
+      cursor: move;
+      touch-action: none;
+      resize: both;
+      overflow: auto;
+      min-width: 180px;
+      max-width: 90%;
+      min-height: 100px;
+      max-height: 90%;
+    }
 
-        resize: both;
-        overflow: auto;
-        min-width: 180px;
-        max-width: 90%;
-        min-height: 100px;
-        max-height: 90%;
-      }
+    .resize-buttons {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
 
-      #tradingview_chart {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        z-index: 1;
-      }
-    </style>
-  </head>
+    .resize-buttons button {
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
-  <body>
-    <div id="signal-box">
-      <h3>📊 Signal: <span id="signal">Loading...</span></h3>
-      <p><strong>Entry:</strong> <span id="entry">--</span></p>
-      <p><strong>Stop Loss:</strong> <span id="sl">--</span></p>
-      <p><strong>Target:</strong> <span id="target">--</span></p>
+    #tradingview_chart {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="signal-box">
+    <h3>📊 Signal: <span id="signal">Loading...</span></h3>
+    <p><strong>Entry:</strong> <span id="entry">--</span></p>
+    <p><strong>Stop Loss:</strong> <span id="sl">--</span></p>
+    <p><strong>Target:</strong> <span id="target">--</span></p>
+
+    <!-- ✅ मोबाईल साठी साईज बदल बटणं -->
+    <div class="resize-buttons">
+      <button onclick="resizeBox('increase')">🔼 मोठं करा</button>
+      <button onclick="resizeBox('decrease')">🔽 लहान करा</button>
     </div>
+  </div>
 
-    <div id="tradingview_chart"></div>
-    <script src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-      new TradingView.widget({
-        container_id: "tradingview_chart",
-        width: "100%",
-        height: "100%",
-        symbol: "BINANCE:BTCUSDT",
-        interval: "1",
-        timezone: "Asia/Kolkata",
-        theme: "light",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#f1f3f6",
-        enable_publishing: false,
-        allow_symbol_change: false,
-        studies: ["MASimple@tv-basicstudies"],
-        overrides: {
-          "moving average.length": 44
-        }
-      });
-    </script>
-
-    <script>
-      async function fetchSignal() {
-        try {
-          const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
-          const data = await res.json();
-          const closes = data.map(c => parseFloat(c[4]));
-          const latest = closes[closes.length - 1];
-          const sma = closes.slice(-44).reduce((a, b) => a + b, 0) / 44;
-
-          let signal = "No Signal", sl = "--", target = "--";
-
-          if (latest > sma) {
-            signal = "Buy";
-            sl = (latest * 0.99).toFixed(2);
-            target = (latest * 1.02).toFixed(2);
-          } else if (latest < sma) {
-            signal = "Sell";
-            sl = (latest * 1.01).toFixed(2);
-            target = (latest * 0.98).toFixed(2);
-          }
-
-          document.getElementById("signal").innerText = signal;
-          document.getElementById("entry").innerText = latest.toFixed(2);
-          document.getElementById("sl").innerText = sl;
-          document.getElementById("target").innerText = target;
-
-        } catch (e) {
-          document.getElementById("signal").innerText = "Error";
-        }
+  <div id="tradingview_chart"></div>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script>
+    new TradingView.widget({
+      container_id: "tradingview_chart",
+      width: "100%",
+      height: "100%",
+      symbol: "BINANCE:BTCUSDT",
+      interval: "1",
+      timezone: "Asia/Kolkata",
+      theme: "light",
+      style: "1",
+      locale: "en",
+      toolbar_bg: "#f1f3f6",
+      enable_publishing: false,
+      allow_symbol_change: false,
+      studies: ["MASimple@tv-basicstudies"],
+      overrides: {
+        "moving average.length": 44
       }
+    });
+  </script>
 
-      fetchSignal();
-      setInterval(fetchSignal, 60000);
-    </script>
+  <script>
+    async function fetchSignal() {
+      try {
+        const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
+        const data = await res.json();
+        const closes = data.map(c => parseFloat(c[4]));
+        const latest = closes[closes.length - 1];
+        const sma = closes.slice(-44).reduce((a, b) => a + b, 0) / 44;
 
-    <script>
-      const box = document.getElementById("signal-box");
-      let isDragging = false, offsetX, offsetY;
+        let signal = "No Signal", sl = "--", target = "--";
 
-      // Desktop Mouse
-      box.addEventListener("mousedown", e => {
-        isDragging = true;
-        offsetX = e.clientX - box.offsetLeft;
-        offsetY = e.clientY - box.offsetTop;
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (isDragging) {
-          box.style.left = (e.clientX - offsetX) + "px";
-          box.style.top = (e.clientY - offsetY) + "px";
-          box.style.bottom = "auto";
+        if (latest > sma) {
+          signal = "Buy";
+          sl = (latest * 0.99).toFixed(2);
+          target = (latest * 1.02).toFixed(2);
+        } else if (latest < sma) {
+          signal = "Sell";
+          sl = (latest * 1.01).toFixed(2);
+          target = (latest * 0.98).toFixed(2);
         }
-      });
 
-      document.addEventListener("mouseup", () => isDragging = false);
+        document.getElementById("signal").innerText = signal;
+        document.getElementById("entry").innerText = latest.toFixed(2);
+        document.getElementById("sl").innerText = sl;
+        document.getElementById("target").innerText = target;
 
-      // Mobile Touch
-      box.addEventListener("touchstart", e => {
-        isDragging = true;
+      } catch (e) {
+        document.getElementById("signal").innerText = "Error";
+      }
+    }
+
+    fetchSignal();
+    setInterval(fetchSignal, 60000);
+  </script>
+
+  <script>
+    // मोबाईलवर मोठं/लहान करण्यासाठी
+    function resizeBox(action) {
+      const box = document.getElementById("signal-box");
+      const currentWidth = box.offsetWidth;
+      const currentHeight = box.offsetHeight;
+
+      const change = 20;
+
+      if (action === "increase") {
+        box.style.width = (currentWidth + change) + "px";
+        box.style.height = (currentHeight + change) + "px";
+      } else if (action === "decrease") {
+        box.style.width = (currentWidth - change) + "px";
+        box.style.height = (currentHeight - change) + "px";
+      }
+    }
+  </script>
+
+  <script>
+    const box = document.getElementById("signal-box");
+    let isDragging = false, offsetX, offsetY;
+
+    box.addEventListener("mousedown", e => {
+      isDragging = true;
+      offsetX = e.clientX - box.offsetLeft;
+      offsetY = e.clientY - box.offsetTop;
+    });
+
+    document.addEventListener("mousemove", e => {
+      if (isDragging) {
+        box.style.left = (e.clientX - offsetX) + "px";
+        box.style.top = (e.clientY - offsetY) + "px";
+        box.style.bottom = "auto";
+      }
+    });
+
+    document.addEventListener("mouseup", () => isDragging = false);
+
+    box.addEventListener("touchstart", e => {
+      isDragging = true;
+      const touch = e.touches[0];
+      offsetX = touch.clientX - box.offsetLeft;
+      offsetY = touch.clientY - box.offsetTop;
+    });
+
+    document.addEventListener("touchmove", e => {
+      if (isDragging) {
         const touch = e.touches[0];
-        offsetX = touch.clientX - box.offsetLeft;
-        offsetY = touch.clientY - box.offsetTop;
-      });
+        box.style.left = (touch.clientX - offsetX) + "px";
+        box.style.top = (touch.clientY - offsetY) + "px";
+        box.style.bottom = "auto";
+      }
+    });
 
-      document.addEventListener("touchmove", e => {
-        if (isDragging) {
-          
+    document.addEventListener("touchend", () => isDragging = false);
+  </script>
+</body>
+</html>
