@@ -24,9 +24,9 @@
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       z-index: 10;
-      cursor: move;
       min-width: 250px;
       font-size: 16px;
+      touch-action: none;
     }
 
     h3, p {
@@ -82,7 +82,7 @@
         const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
         const data = await res.json();
 
-        const last = data[data.length - 2];
+        const last = data[data.length - 2]; // completed candle
         const open = parseFloat(last[1]);
         const high = parseFloat(last[2]);
         const low = parseFloat(last[3]);
@@ -139,6 +139,24 @@
     });
 
     document.addEventListener("mouseup", () => isDragging = false);
+
+    // For mobile touch drag
+    box.addEventListener("touchstart", e => {
+      isDragging = true;
+      const touch = e.touches[0];
+      offsetX = touch.clientX - box.offsetLeft;
+      offsetY = touch.clientY - box.offsetTop;
+    });
+
+    document.addEventListener("touchmove", e => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        box.style.left = (touch.clientX - offsetX) + "px";
+        box.style.top = (touch.clientY - offsetY) + "px";
+      }
+    });
+
+    document.addEventListener("touchend", () => isDragging = false);
   </script>
 </body>
 </html>
