@@ -26,28 +26,26 @@
   }
 
   #signal-box {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-    cursor: move;
-    touch-action: none;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255,255,255,0.95);
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  z-index: 10;
+  cursor: move;
+  touch-action: none;
 
-    /* ✅ Resize works */
-    resize: both;
-    overflow: auto;
+  /* ✅ Add this */
+  resize: both;
+  overflow: auto;
+  min-width: 180px;
+  max-width: 90%;
+  min-height: 100px;
+  max-height: 90%;
+}
 
-    /* ✅ Size boundaries */
-    min-width: 180px;
-    max-width: 90%;
-    min-height: 100px;
-    max-height: 90%;
-  }
-</style>
 
 
 
