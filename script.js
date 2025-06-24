@@ -29,62 +29,55 @@ async function fetchData() {
     candleSeries.setData(candles);
 
     const closes = candles.map(c => c.close);
-
-    function sma(data, len) {
-      const result = [];
-      for (let i = len - 1; i < data.length; i++) {
-        const slice = data.slice(i - len + 1, i + 1);
+    const sma = (arr, len) => {
+      const res = [];
+      for (let i = len - 1; i < arr.length; i++) {
+        const slice = arr.slice(i - len + 1, i + 1);
         const avg = slice.reduce((a, b) => a + b, 0) / len;
-        result.push({ index: i, value: avg });
+        res.push({ index: i, value: avg });
       }
-      return result;
-    }
+      return res;
+    };
 
     const sma22 = sma(closes, 22);
     const sma33 = sma(closes, 33);
-    const sma44 = sma(closes, 44);
-
     const lastIdx = candles.length - 2;
     const last = candles[lastIdx];
-
     const lastSMA22 = sma22.find(s => s.index === lastIdx)?.value;
     const lastSMA33 = sma33.find(s => s.index === lastIdx)?.value;
-    const lastSMA44 = sma44.find(s => s.index === lastIdx)?.value;
 
     let signal = "No Signal", entry = 0, sl = 0, target = 0;
 
-    const rising =
-      lastSMA22 > sma22.find(s => s.index === lastIdx - 1)?.value &&
-      lastSMA33 > sma33.find(s => s.index === lastIdx - 1)?.value;
+    if (lastSMA22 && lastSMA33) {
+      const rising = lastSMA22 > sma22.find(s => s.index === lastIdx - 1)?.value &&
+                     lastSMA33 > sma33.find(s => s.index === lastIdx - 1)?.value;
 
-    const falling =
-      lastSMA22 < sma22.find(s => s.index === lastIdx - 1)?.value &&
-      lastSMA33 < sma33.find(s => s.index === lastIdx - 1)?.value;
+      const falling = lastSMA22 < sma22.find(s => s.index === lastIdx - 1)?.value &&
+                      lastSMA33 < sma33.find(s => s.index === lastIdx - 1)?.value;
 
-    const nearSupport =
-      (last.low <= lastSMA22 && last.high >= lastSMA22) ||
-      (last.low <= lastSMA33 && last.high >= lastSMA33);
+      const nearSupport = (last.low <= lastSMA22 && last.high >= lastSMA22) ||
+                          (last.low <= lastSMA33 && last.high >= lastSMA33);
 
-    const nearResistance =
-      (last.high >= lastSMA22 && last.low <= lastSMA22) ||
-      (last.high >= lastSMA33 && last.low <= lastSMA33);
+      const nearResistance = (last.high >= lastSMA22 && last.low <= lastSMA22) ||
+                             (last.high >= lastSMA33 && last.low <= lastSMA33);
 
-    if (rising && nearSupport && last.close > last.open) {
-      signal = "Buy";
-      entry = last.high;
-      sl = last.low;
-      target = entry + 2 * (entry - sl);
-    } else if (falling && nearResistance && last.close < last.open) {
-      signal = "Sell";
-      entry = last.low;
-      sl = last.high;
-      target = entry - 2 * (sl - entry);
+      if (rising && nearSupport && last.close > last.open) {
+        signal = "Buy";
+        entry = last.high;
+        sl = last.low;
+        target = entry + 2 * (entry - sl);
+      } else if (falling && nearResistance && last.close < last.open) {
+        signal = "Sell";
+        entry = last.low;
+        sl = last.high;
+        target = entry - 2 * (sl - entry);
+      }
     }
 
     document.getElementById("signal").innerText = signal;
-    document.getElementById("entry").innerText = entry ? entry.toFixed(2) : "--";
-    document.getElementById("sl").innerText = sl ? sl.toFixed(2) : "--";
-    document.getElementById("target").innerText = target ? target.toFixed(2) : "--";
+    document.getElementById("entry").innerText = entry.toFixed(2);
+    document.getElementById("sl").innerText = sl.toFixed(2);
+    document.getElementById("target").innerText = target.toFixed(2);
 
     if (signal !== "No Signal") {
       const t = last.time;
@@ -92,9 +85,9 @@ async function fetchData() {
       slLine.setData([{ time: t, value: sl }, { time: t + 60, value: sl }]);
       targetLine.setData([{ time: t, value: target }, { time: t + 60, value: target }]);
     }
-  } catch (e) {
+  } catch (err) {
+    console.error(err);
     document.getElementById("signal").innerText = "Error";
-    console.error(e);
   }
 }
 
