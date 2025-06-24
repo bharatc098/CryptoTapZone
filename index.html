@@ -2,35 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CryptoTapZone (Lightweight Chart)</title>
+  <title>CryptoTapZone</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
       font-family: Arial, sans-serif;
-      background: #ffffff;
     }
     #chart {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
     }
     #signal-box {
       position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(255,255,255,0.95);
-      padding: 20px;
+      top: 20px; left: 20px;
+      background: rgba(255,255,255,0.9);
+      padding: 15px 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
       z-index: 10;
       cursor: move;
-      font-size: 16px;
     }
   </style>
 </head>
@@ -45,104 +37,86 @@
 
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <script>
-    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-      layout: { background: { color: '#fff' }, textColor: '#000' },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+    const chartContainer = document.getElementById('chart');
+    const chart = LightweightCharts.createChart(chartContainer, {
       width: window.innerWidth,
       height: window.innerHeight,
+      layout: { background: { color: '#fff' }, textColor: '#000' },
     });
     const candleSeries = chart.addCandlestickSeries();
-    const lineSeriesEntry = chart.addLineSeries({ color: '#00b300', lineWidth: 1 });
-    const lineSeriesSL = chart.addLineSeries({ color: '#ff3333', lineWidth: 1 });
-    const lineSeriesTarget = chart.addLineSeries({ color: '#3366ff', lineWidth: 1 });
+    const entryLine = chart.addLineSeries({ color: '#00b300', lineWidth: 2 });
+    const slLine = chart.addLineSeries({ color: '#ff3333', lineWidth: 2 });
+    const targetLine = chart.addLineSeries({ color: '#3366ff', lineWidth: 2 });
 
     async function fetchSignal() {
       try {
         const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
         const data = await res.json();
 
-        const formatted = data.map(c => ({
-          time: parseInt(c[0] / 1000),
+        const candles = data.map(c => ({
+          time: Math.floor(c[0] / 1000),
           open: parseFloat(c[1]),
           high: parseFloat(c[2]),
           low: parseFloat(c[3]),
           close: parseFloat(c[4])
         }));
 
-        candleSeries.setData(formatted);
+        candleSeries.setData(candles);
 
-        const last = formatted[formatted.length - 2];
-        const closes = formatted.slice(-44).map(c => c.close);
+        const last = candles[candles.length - 2];
+        const closes = candles.slice(-44).map(c => c.close);
         const sma = closes.reduce((a, b) => a + b, 0) / closes.length;
+        const near = sma * 0.005;
 
-        const nearThreshold = sma * 0.005;
-        let signal = "No Signal", entry = "--", sl = "--", target = "--";
+        let signal = 'No Signal', entry = 0, sl = 0, target = 0;
 
-        if ((last.close > last.open) && Math.abs(last.close - sma) <= nearThreshold && last.close >= sma) {
-          signal = "Buy";
+        if ((last.close > last.open) && Math.abs(last.close - sma) <= near && last.close >= sma) {
+          signal = 'Buy';
           entry = last.high;
           sl = last.low;
-          const risk = entry - sl;
-          target = entry + 2 * risk;
-        } else if ((last.close < last.open) && Math.abs(last.close - sma) <= nearThreshold && last.close <= sma) {
-          signal = "Sell";
+          target = entry + 2 * (entry - sl);
+        } else if ((last.close < last.open) && Math.abs(last.close - sma) <= near && last.close <= sma) {
+          signal = 'Sell';
           entry = last.low;
           sl = last.high;
-          const risk = sl - entry;
-          target = entry - 2 * risk;
+          target = entry - 2 * (sl - entry);
         }
 
-        document.getElementById("signal").innerText = signal;
-        document.getElementById("entry").innerText = entry.toFixed(2);
-        document.getElementById("sl").innerText = sl.toFixed(2);
-        document.getElementById("target").innerText = target.toFixed(2);
+        document.getElementById('signal').innerText = signal;
+        document.getElementById('entry').innerText = entry.toFixed(2);
+        document.getElementById('sl').innerText = sl.toFixed(2);
+        document.getElementById('target').innerText = target.toFixed(2);
 
-        if (signal === "Buy" || signal === "Sell") {
-          const lastTime = last.time;
-          lineSeriesEntry.setData([{ time: lastTime, value: entry }, { time: lastTime + 60, value: entry }]);
-          lineSeriesSL.setData([{ time: lastTime, value: sl }, { time: lastTime + 60, value: sl }]);
-          lineSeriesTarget.setData([{ time: lastTime, value: target }, { time: lastTime + 60, value: target }]);
+        if (signal !== 'No Signal') {
+          const t = last.time;
+          entryLine.setData([{ time: t, value: entry }, { time: t + 60, value: entry }]);
+          slLine.setData([{ time: t, value: sl }, { time: t + 60, value: sl }]);
+          targetLine.setData([{ time: t, value: target }, { time: t + 60, value: target }]);
         }
-
       } catch (e) {
-        document.getElementById("signal").innerText = "Error";
+        document.getElementById('signal').innerText = 'Error';
       }
     }
 
     fetchSignal();
     setInterval(fetchSignal, 60000);
 
-    // Drag for signal box
-    const box = document.getElementById("signal-box");
+    // Drag signal box
+    const box = document.getElementById('signal-box');
     let isDragging = false, offsetX, offsetY;
 
-    box.addEventListener("mousedown", e => {
+    box.addEventListener('mousedown', e => {
       isDragging = true;
       offsetX = e.clientX - box.offsetLeft;
       offsetY = e.clientY - box.offsetTop;
     });
-    document.addEventListener("mousemove", e => {
+    document.addEventListener('mousemove', e => {
       if (isDragging) {
-        box.style.left = (e.clientX - offsetX) + "px";
-        box.style.top = (e.clientY - offsetY) + "px";
+        box.style.left = (e.clientX - offsetX) + 'px';
+        box.style.top = (e.clientY - offsetY) + 'px';
       }
     });
-    document.addEventListener("mouseup", () => isDragging = false);
-
-    box.addEventListener("touchstart", e => {
-      isDragging = true;
-      const touch = e.touches[0];
-      offsetX = touch.clientX - box.offsetLeft;
-      offsetY = touch.clientY - box.offsetTop;
-    });
-    document.addEventListener("touchmove", e => {
-      if (isDragging) {
-        const touch = e.touches[0];
-        box.style.left = (touch.clientX - offsetX) + "px";
-        box.style.top = (touch.clientY - offsetY) + "px";
-      }
-    });
-    document.addEventListener("touchend", () => isDragging = false);
+    document.addEventListener('mouseup', () => isDragging = false);
   </script>
 </body>
 </html>
