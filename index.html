@@ -82,24 +82,33 @@
       try {
         const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
         const data = await res.json();
-        const closes = data.map(c => parseFloat(c[4]));
-        const latest = closes[closes.length - 1];
-        const sma = closes.slice(-44).reduce((a, b) => a + b, 0) / 44;
 
-        let signal = "No Signal", sl = "--", target = "--";
+        const lastCandle = data[data.length - 2]; // Previous completed candle
+        const close = parseFloat(lastCandle[4]);
+        const open = parseFloat(lastCandle[1]);
+        const high = parseFloat(lastCandle[2]);
+        const low = parseFloat(lastCandle[3]);
 
-        if (latest > sma) {
+        const closes = data.slice(-44).map(c => parseFloat(c[4]));
+        const sma = closes.reduce((a, b) => a + b, 0) / closes.length;
+
+        const nearThreshold = sma * 0.005; // 0.5% range
+        let signal = "No Signal", entry = "--", sl = "--", target = "--";
+
+        if ((close > open) && Math.abs(close - sma) <= nearThreshold && close >= sma) {
           signal = "Buy";
-          sl = (latest * 0.99).toFixed(2);
-          target = (latest * 1.02).toFixed(2);
-        } else if (latest < sma) {
+          entry = high.toFixed(2);
+          sl = low.toFixed(2);
+          target = (high + (high - low)).toFixed(2);
+        } else if ((close < open) && Math.abs(close - sma) <= nearThreshold && close <= sma) {
           signal = "Sell";
-          sl = (latest * 1.01).toFixed(2);
-          target = (latest * 0.98).toFixed(2);
+          entry = low.toFixed(2);
+          sl = high.toFixed(2);
+          target = (low - (high - low)).toFixed(2);
         }
 
         document.getElementById("signal").innerText = signal;
-        document.getElementById("entry").innerText = latest.toFixed(2);
+        document.getElementById("entry").innerText = entry;
         document.getElementById("sl").innerText = sl;
         document.getElementById("target").innerText = target;
 
@@ -113,7 +122,6 @@
   </script>
 
   <script>
-    // ड्रॅग अँड ड्रॉप साठी
     const box = document.getElementById("signal-box");
     let isDragging = false, offsetX, offsetY;
 
