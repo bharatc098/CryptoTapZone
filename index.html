@@ -6,28 +6,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
       font-family: Arial, sans-serif;
+      background: #fff;
+      overflow: hidden;
     }
-    #chart {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-    }
+
     #signal-box {
       position: absolute;
-      top: 20px; left: 20px;
-      background: rgba(255,255,255,0.9);
-      padding: 15px 20px;
+      top: 20px;
+      left: 20px;
+      background: rgba(255,255,255,0.95);
+      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       z-index: 10;
       cursor: move;
+      min-width: 250px;
+      font-size: 16px;
+    }
+
+    h3, p {
+      margin: 6px 0;
+    }
+
+    #tradingview_chart {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
     }
   </style>
 </head>
+
 <body>
-  <div id="chart"></div>
   <div id="signal-box">
     <h3>📊 सिग्नल: <span id="signal">Loading...</span></h3>
     <p><strong>एंट्री:</strong> <span id="entry">--</span></p>
@@ -35,80 +52,93 @@
     <p><strong>टार्गेट:</strong> <span id="target">--</span></p>
   </div>
 
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <div id="tradingview_chart"></div>
+
+  <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
-    const chartContainer = document.getElementById('chart');
-    const chart = LightweightCharts.createChart(chartContainer, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      layout: { background: { color: '#fff' }, textColor: '#000' },
+    new TradingView.widget({
+      container_id: "tradingview_chart",
+      width: "100%",
+      height: "100%",
+      symbol: "BINANCE:BTCUSDT",
+      interval: "1",
+      timezone: "Asia/Kolkata",
+      theme: "light",
+      style: "1",
+      locale: "en",
+      toolbar_bg: "#f1f3f6",
+      enable_publishing: false,
+      allow_symbol_change: false,
+      studies: ["MASimple@tv-basicstudies"],
+      overrides: {
+        "moving average.length": 44
+      }
     });
+  </script>
 
-    const candleSeries = chart.addCandlestickSeries();
-
-    let entryLineRef = null;
-    let slLineRef = null;
-    let targetLineRef = null;
-
+  <script>
     async function fetchSignal() {
       try {
         const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
         const data = await res.json();
 
-        const candles = data.map(c => ({
-          time: Math.floor(c[0] / 1000),
-          open: parseFloat(c[1]),
-          high: parseFloat(c[2]),
-          low: parseFloat(c[3]),
-          close: parseFloat(c[4])
-        }));
+        const last = data[data.length - 2];
+        const open = parseFloat(last[1]);
+        const high = parseFloat(last[2]);
+        const low = parseFloat(last[3]);
+        const close = parseFloat(last[4]);
 
-        candleSeries.setData(candles);
-
-        const last = candles[candles.length - 2];
-        const closes = candles.slice(-44).map(c => c.close);
+        const closes = data.slice(-44).map(c => parseFloat(c[4]));
         const sma = closes.reduce((a, b) => a + b, 0) / closes.length;
         const near = sma * 0.005;
 
-        let signal = 'No Signal', entry = 0, sl = 0, target = 0;
+        let signal = 'No Signal', entry = '--', sl = '--', target = '--';
 
-        if ((last.close > last.open) && Math.abs(last.close - sma) <= near && last.close >= sma) {
+        if ((close > open) && Math.abs(close - sma) <= near && close >= sma) {
           signal = 'Buy';
-          entry = last.high;
-          sl = last.low;
-          target = entry + 2 * (entry - sl);
-        } else if ((last.close < last.open) && Math.abs(last.close - sma) <= near && last.close <= sma) {
+          entry = high.toFixed(2);
+          sl = low.toFixed(2);
+          const risk = high - low;
+          target = (high + 2 * risk).toFixed(2);
+        } else if ((close < open) && Math.abs(close - sma) <= near && close <= sma) {
           signal = 'Sell';
-          entry = last.low;
-          sl = last.high;
-          target = entry - 2 * (sl - entry);
+          entry = low.toFixed(2);
+          sl = high.toFixed(2);
+          const risk = high - low;
+          target = (low - 2 * risk).toFixed(2);
         }
 
         document.getElementById('signal').innerText = signal;
-        document.getElementById('entry').innerText = entry.toFixed(2);
-        document.getElementById('sl').innerText = sl.toFixed(2);
-        document.getElementById('target').innerText = target.toFixed(2);
+        document.getElementById('entry').innerText = entry;
+        document.getElementById('sl').innerText = sl;
+        document.getElementById('target').innerText = target;
+      } catch (e) {
+        document.getElementById('signal').innerText = 'Error';
+      }
+    }
 
-        if (signal !== 'No Signal') {
-          // Remove previous lines
-          if (entryLineRef) candleSeries.removePriceLine(entryLineRef);
-          if (slLineRef) candleSeries.removePriceLine(slLineRef);
-          if (targetLineRef) candleSeries.removePriceLine(targetLineRef);
+    fetchSignal();
+    setInterval(fetchSignal, 60000);
+  </script>
 
-          // Add horizontal price lines
-          entryLineRef = candleSeries.createPriceLine({
-            price: entry,
-            color: '#00b300',
-            lineWidth: 2,
-            lineStyle: LightweightCharts.LineStyle.Solid,
-            axisLabelVisible: true,
-            title: 'Entry'
-          });
+  <script>
+    const box = document.getElementById("signal-box");
+    let isDragging = false, offsetX, offsetY;
 
-          slLineRef = candleSeries.createPriceLine({
-            price: sl,
-            color: '#ff3333',
-            lineWidth: 2,
-            lineStyle: LightweightCharts.LineStyle.Solid,
-            axisLabe
-            
+    box.addEventListener("mousedown", e => {
+      isDragging = true;
+      offsetX = e.clientX - box.offsetLeft;
+      offsetY = e.clientY - box.offsetTop;
+    });
+
+    document.addEventListener("mousemove", e => {
+      if (isDragging) {
+        box.style.left = (e.clientX - offsetX) + "px";
+        box.style.top = (e.clientY - offsetY) + "px";
+      }
+    });
+
+    document.addEventListener("mouseup", () => isDragging = false);
+  </script>
+</body>
+</html>
