@@ -2,44 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CryptoTapZone</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      overflow: hidden;
-    }
-
-    #chart {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    #signal-box {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(255,255,255,0.95);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 10;
-      cursor: move;
-      min-width: 250px;
-    }
-
-    h3, p {
-      margin: 6px 0;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="chart"></div>
@@ -49,10 +15,6 @@
     <p><strong>स्टॉप लॉस:</strong> <span id="sl">--</span></p>
     <p><strong>टार्गेट:</strong> <span id="target">--</span></p>
   </div>
-
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-  <script>
-    // पुढच्या स्टेपमध्ये स्क्रिप्ट कोड टाकू.
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
