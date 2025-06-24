@@ -13,16 +13,6 @@ const entryLine = chart.addLineSeries({ color: '#00b300', lineWidth: 2 });
 const slLine = chart.addLineSeries({ color: '#ff3333', lineWidth: 2 });
 const targetLine = chart.addLineSeries({ color: '#3366ff', lineWidth: 2 });
 
-function calculateSMA(data, length) {
-  const result = [];
-  for (let i = length - 1; i < data.length; i++) {
-    const slice = data.slice(i - length + 1, i + 1);
-    const avg = slice.reduce((a, b) => a + b, 0) / length;
-    result.push({ index: i, value: avg });
-  }
-  return result;
-}
-
 async function fetchData() {
   try {
     const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60");
@@ -39,38 +29,44 @@ async function fetchData() {
     candleSeries.setData(candles);
 
     const closes = candles.map(c => c.close);
-    const sma22 = calculateSMA(closes, 22);
-    const sma33 = calculateSMA(closes, 33);
-    const sma44 = calculateSMA(closes, 44);
+    const sma = (arr, len) => {
+      const res = [];
+      for (let i = len - 1; i < arr.length; i++) {
+        const slice = arr.slice(i - len + 1, i + 1);
+        const avg = slice.reduce((a, b) => a + b, 0) / len;
+        res.push({ index: i, value: avg });
+      }
+      return res;
+    };
 
+    const sma22 = sma(closes, 22);
+    const sma33 = sma(closes, 33);
     const lastIdx = candles.length - 2;
     const last = candles[lastIdx];
-
     const lastSMA22 = sma22.find(s => s.index === lastIdx)?.value;
     const lastSMA33 = sma33.find(s => s.index === lastIdx)?.value;
-    const lastSMA44 = sma44.find(s => s.index === lastIdx)?.value;
 
     let signal = "No Signal", entry = 0, sl = 0, target = 0;
 
     if (lastSMA22 && lastSMA33) {
-      const rising =
-        lastSMA22 > sma22.find(s => s.index === lastIdx - 1)?.value &&
-        lastSMA33 > sma33.find(s => s.index === lastIdx - 1)?.value;
+      const rising = lastSMA22 > sma22.find(s => s.index === lastIdx - 1)?.value &&
+                     lastSMA33 > sma33.find(s => s.index === lastIdx - 1)?.value;
 
-      const falling =
-        lastSMA22 < sma22.find(s => s.index === lastIdx - 1)?.value &&
-        lastSMA33 < sma33.find(s => s.index === lastIdx - 1)?.value;
+      const falling = lastSMA22 < sma22.find(s => s.index === lastIdx - 1)?.value &&
+                      lastSMA33 < sma33.find(s => s.index === lastIdx - 1)?.value;
 
-      const nearSMA =
-        (last.low <= lastSMA22 && last.high >= lastSMA22) ||
-        (last.low <= lastSMA33 && last.high >= lastSMA33);
+      const nearSupport = (last.low <= lastSMA22 && last.high >= lastSMA22) ||
+                          (last.low <= lastSMA33 && last.high >= lastSMA33);
 
-      if (rising && nearSMA && last.close > last.open) {
+      const nearResistance = (last.high >= lastSMA22 && last.low <= lastSMA22) ||
+                             (last.high >= lastSMA33 && last.low <= lastSMA33);
+
+      if (rising && nearSupport && last.close > last.open) {
         signal = "Buy";
         entry = last.high;
         sl = last.low;
         target = entry + 2 * (entry - sl);
-      } else if (falling && nearSMA && last.close < last.open) {
+      } else if (falling && nearResistance && last.close < last.open) {
         signal = "Sell";
         entry = last.low;
         sl = last.high;
@@ -97,3 +93,39 @@ async function fetchData() {
 
 fetchData();
 setInterval(fetchData, 60000);
+
+// Dragging (Mouse + Touch)
+const box = document.getElementById("signal-box");
+let isDragging = false, offsetX, offsetY;
+
+box.addEventListener("mousedown", e => {
+  isDragging = true;
+  offsetX = e.clientX - box.offsetLeft;
+  offsetY = e.clientY - box.offsetTop;
+});
+
+document.addEventListener("mousemove", e => {
+  if (isDragging) {
+    box.style.left = (e.clientX - offsetX) + "px";
+    box.style.top = (e.clientY - offsetY) + "px";
+  }
+});
+
+document.addEventListener("mouseup", () => isDragging = false);
+
+box.addEventListener("touchstart", e => {
+  isDragging = true;
+  const touch = e.touches[0];
+  offsetX = touch.clientX - box.offsetLeft;
+  offsetY = touch.clientY - box.offsetTop;
+});
+
+document.addEventListener("touchmove", e => {
+  if (isDragging) {
+    const touch = e.touches[0];
+    box.style.left = (touch.clientX - offsetX) + "px";
+    box.style.top = (touch.clientY - offsetY) + "px";
+  }
+});
+
+document.addEventListener("touchend", () => isDragging = false);
