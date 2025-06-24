@@ -34,17 +34,23 @@
       max-height: 90%;
     }
 
-    .resize-buttons {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-    }
+    <script>
+  function resizeBox(action) {
+    const box = document.getElementById("signal-box");
+    const currentWidth = box.offsetWidth;
+    const currentHeight = box.offsetHeight;
+    const change = 20;
 
-    .resize-buttons button {
-      padding: 5px 10px;
-      font-size: 14px;
-      cursor: pointer;
+    if (action === "increase") {
+      box.style.width = (currentWidth + change) + "px";
+      box.style.height = (currentHeight + change) + "px";
+    } else if (action === "decrease") {
+      box.style.width = (currentWidth - change) + "px";
+      box.style.height = (currentHeight - change) + "px";
     }
+  }
+</script>
+
 
     #tradingview_chart {
       position: absolute;
