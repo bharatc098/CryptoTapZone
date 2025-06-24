@@ -57,6 +57,42 @@
 
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
+    let tvWidget, chart;
+
+    function drawLines(entry, sl, target) {
+      if (!chart) return;
+      chart.removeAllShapes();
+      const now = chart.model().mainSeries().bars().lastValue().time;
+
+      chart.createShape({
+        time: now,
+        price: parseFloat(entry),
+        shape: "horizontal_line",
+        text: "Entry",
+        color: "#00b300",
+        disableSelection: true,
+        disableSave: true
+      });
+      chart.createShape({
+        time: now,
+        price: parseFloat(sl),
+        shape: "horizontal_line",
+        text: "Stop Loss",
+        color: "#ff3333",
+        disableSelection: true,
+        disableSave: true
+      });
+      chart.createShape({
+        time: now,
+        price: parseFloat(target),
+        shape: "horizontal_line",
+        text: "Target",
+        color: "#3366ff",
+        disableSelection: true,
+        disableSave: true
+      });
+    }
+
     new TradingView.widget({
       container_id: "tradingview_chart",
       width: "100%",
@@ -73,7 +109,21 @@
       studies: ["MASimple@tv-basicstudies"],
       overrides: {
         "moving average.length": 44
-      }
+      },
+      autosize: true,
+      withdateranges: false,
+      save_image: false,
+      details: false,
+      news: []
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        tvWidget = window.TradingView && window.TradingView.widgetInstance;
+        if (tvWidget && tvWidget.activeChart) {
+          chart = tvWidget.activeChart();
+        }
+      }, 3000);
     });
   </script>
 
@@ -83,7 +133,7 @@
         const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
         const data = await res.json();
 
-        const lastCandle = data[data.length - 2]; // Previous completed candle
+        const lastCandle = data[data.length - 2];
         const close = parseFloat(lastCandle[4]);
         const open = parseFloat(lastCandle[1]);
         const high = parseFloat(lastCandle[2]);
@@ -92,25 +142,31 @@
         const closes = data.slice(-44).map(c => parseFloat(c[4]));
         const sma = closes.reduce((a, b) => a + b, 0) / closes.length;
 
-        const nearThreshold = sma * 0.005; // 0.5% range
+        const nearThreshold = sma * 0.005;
         let signal = "No Signal", entry = "--", sl = "--", target = "--";
 
         if ((close > open) && Math.abs(close - sma) <= nearThreshold && close >= sma) {
           signal = "Buy";
           entry = high.toFixed(2);
           sl = low.toFixed(2);
-          target = (high + (high - low)).toFixed(2);
+          const risk = high - low;
+          target = (high + 2 * risk).toFixed(2);
         } else if ((close < open) && Math.abs(close - sma) <= nearThreshold && close <= sma) {
           signal = "Sell";
           entry = low.toFixed(2);
           sl = high.toFixed(2);
-          target = (low - (high - low)).toFixed(2);
+          const risk = high - low;
+          target = (low - 2 * risk).toFixed(2);
         }
 
         document.getElementById("signal").innerText = signal;
         document.getElementById("entry").innerText = entry;
         document.getElementById("sl").innerText = sl;
         document.getElementById("target").innerText = target;
+
+        if (signal === "Buy" || signal === "Sell") {
+          drawLines(entry, sl, target);
+        }
 
       } catch (e) {
         document.getElementById("signal").innerText = "Error";
