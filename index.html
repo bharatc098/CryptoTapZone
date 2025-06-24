@@ -39,17 +39,6 @@
       font-size: 16px;
     }
 
-    .resize-buttons {
-      margin-top: 12px;
-    }
-
-    .resize-buttons button {
-      font-size: 14px;
-      padding: 6px 10px;
-      margin-right: 8px;
-      cursor: pointer;
-    }
-
     h3, p {
       margin: 6px 0;
     }
@@ -62,11 +51,6 @@
     <p><strong>एंट्री:</strong> <span id="entry">--</span></p>
     <p><strong>स्टॉप लॉस:</strong> <span id="sl">--</span></p>
     <p><strong>टार्गेट:</strong> <span id="target">--</span></p>
-
-    <div class="resize-buttons">
-      <button onclick="resizeBox('increase')">🔼 मोठं करा</button>
-      <button onclick="resizeBox('decrease')">🔽 लहान करा</button>
-    </div>
   </div>
 
   <div id="tradingview_chart"></div>
@@ -129,24 +113,7 @@
   </script>
 
   <script>
-    function resizeBox(action) {
-      const box = document.getElementById("signal-box");
-      const currentWidth = box.offsetWidth;
-      const currentHeight = box.offsetHeight;
-      const change = 20;
-
-      if (action === "increase") {
-        box.style.width = (currentWidth + change) + "px";
-        box.style.height = (currentHeight + change) + "px";
-      } else if (action === "decrease") {
-        box.style.width = (currentWidth - change) + "px";
-        box.style.height = (currentHeight - change) + "px";
-      }
-    }
-  </script>
-
-  <script>
-    // ड्रॅग बॉक्स कोड
+    // ड्रॅग अँड ड्रॉप साठी
     const box = document.getElementById("signal-box");
     let isDragging = false, offsetX, offsetY;
 
