@@ -26,135 +26,14 @@
       z-index: 10;
       cursor: move;
       touch-action: none;
+      resize: both;
       overflow: auto;
       min-width: 180px;
-      max-width: 90vw;
+      max-width: 90%;
       min-height: 100px;
-      max-height: 90vh;
-      box-sizing: border-box;
+      max-height: 90%;
     }
 
     #tradingview_chart {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-      z-index: 1;
-    }
-
-    .resize-buttons {
-      margin-top: 10px;
-    }
-
-    .resize-buttons button {
-      font-size: 16px;
-      padding: 6px 12px;
-      margin-right: 8px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="signal-box">
-    <h3>📊 Signal: <span id="signal">Loading...</span></h3>
-    <p><strong>Entry:</strong> <span id="entry">--</span></p>
-    <p><strong>Stop Loss:</strong> <span id="sl">--</span></p>
-    <p><strong>Target:</strong> <span id="target">--</span></p>
-
-    <div class="resize-buttons">
-      <button onclick="resizeBox('increase')">🔼 मोठं करा</button>
-      <button onclick="resizeBox('decrease')">🔽 लहान करा</button>
-    </div>
-  </div>
-
-  <div id="tradingview_chart"></div>
-
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    new TradingView.widget({
-      container_id: "tradingview_chart",
-      width: "100%",
-      height: "100%",
-      symbol: "BINANCE:BTCUSDT",
-      interval: "1",
-      timezone: "Asia/Kolkata",
-      theme: "light",
-      style: "1",
-      locale: "en",
-      toolbar_bg: "#f1f3f6",
-      enable_publishing: false,
-      allow_symbol_change: false,
-      studies: ["MASimple@tv-basicstudies"],
-      overrides: {
-        "moving average.length": 44
-      }
-    });
-  </script>
-
-  <script>
-    async function fetchSignal() {
-      try {
-        const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
-        const data = await res.json();
-        const closes = data.map(c => parseFloat(c[4]));
-        const latest = closes[closes.length - 1];
-        const sma = closes.slice(-44).reduce((a, b) => a + b, 0) / 44;
-
-        let signal = "No Signal", sl = "--", target = "--";
-
-        if (latest > sma) {
-          signal = "Buy";
-          sl = (latest * 0.99).toFixed(2);
-          target = (latest * 1.02).toFixed(2);
-        } else if (latest < sma) {
-          signal = "Sell";
-          sl = (latest * 1.01).toFixed(2);
-          target = (latest * 0.98).toFixed(2);
-        }
-
-        document.getElementById("signal").innerText = signal;
-        document.getElementById("entry").innerText = latest.toFixed(2);
-        document.getElementById("sl").innerText = sl;
-        document.getElementById("target").innerText = target;
-
-      } catch (e) {
-        document.getElementById("signal").innerText = "Error";
-      }
-    }
-
-    fetchSignal();
-    setInterval(fetchSignal, 60000);
-
-    // सुधारित resizeBox फंक्शन: 
-    function resizeBox(action) {
-      const box = document.getElementById("signal-box");
-      const style = window.getComputedStyle(box);
-      const currentWidth = parseFloat(style.width);
-      const currentHeight = parseFloat(style.height);
-      const change = 20;
-
-      const minWidth = 180;
-      const maxWidth = window.innerWidth * 0.9;
-      const minHeight = 100;
-      const maxHeight = window.innerHeight * 0.9;
-
-      if (action === "increase") {
-        box.style.width = Math.min(currentWidth + change, maxWidth) + "px";
-        box.style.height = Math.min(currentHeight + change, maxHeight) + "px";
-      } else if (action === "decrease") {
-        box.style.width = Math.max(currentWidth - change, minWidth) + "px";
-        box.style.height = Math.max(currentHeight - change, minHeight) + "px";
-      }
-    }
-  </script>
-
-  <script>
-    // ड्रॅग अँड ड्रॉप साठी मूळ कोडप्रमाणे
-    const box = document.getElementById("signal-box");
-    let isDragging = false, offsetX, offsetY;
-
-    box.addEventListener("mousedown", e => {
-      isDragging = true
-      
+      positi
+          
