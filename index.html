@@ -43,10 +43,12 @@
       height: window.innerHeight,
       layout: { background: { color: '#fff' }, textColor: '#000' },
     });
+
     const candleSeries = chart.addCandlestickSeries();
-    const entryLine = chart.addLineSeries({ color: '#00b300', lineWidth: 2 });
-    const slLine = chart.addLineSeries({ color: '#ff3333', lineWidth: 2 });
-    const targetLine = chart.addLineSeries({ color: '#3366ff', lineWidth: 2 });
+
+    let entryLineRef = null;
+    let slLineRef = null;
+    let targetLineRef = null;
 
     async function fetchSignal() {
       try {
@@ -88,35 +90,25 @@
         document.getElementById('target').innerText = target.toFixed(2);
 
         if (signal !== 'No Signal') {
-          const t = last.time;
-          entryLine.setData([{ time: t, value: entry }, { time: t + 60, value: entry }]);
-          slLine.setData([{ time: t, value: sl }, { time: t + 60, value: sl }]);
-          targetLine.setData([{ time: t, value: target }, { time: t + 60, value: target }]);
-        }
-      } catch (e) {
-        document.getElementById('signal').innerText = 'Error';
-      }
-    }
+          // Remove previous lines
+          if (entryLineRef) candleSeries.removePriceLine(entryLineRef);
+          if (slLineRef) candleSeries.removePriceLine(slLineRef);
+          if (targetLineRef) candleSeries.removePriceLine(targetLineRef);
 
-    fetchSignal();
-    setInterval(fetchSignal, 60000);
+          // Add horizontal price lines
+          entryLineRef = candleSeries.createPriceLine({
+            price: entry,
+            color: '#00b300',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            axisLabelVisible: true,
+            title: 'Entry'
+          });
 
-    // Drag signal box
-    const box = document.getElementById('signal-box');
-    let isDragging = false, offsetX, offsetY;
-
-    box.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - box.offsetLeft;
-      offsetY = e.clientY - box.offsetTop;
-    });
-    document.addEventListener('mousemove', e => {
-      if (isDragging) {
-        box.style.left = (e.clientX - offsetX) + 'px';
-        box.style.top = (e.clientY - offsetY) + 'px';
-      }
-    });
-    document.addEventListener('mouseup', () => isDragging = false);
-  </script>
-</body>
-</html>
+          slLineRef = candleSeries.createPriceLine({
+            price: sl,
+            color: '#ff3333',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            axisLabe
+            
