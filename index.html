@@ -31,7 +31,7 @@
       max-width: 90vw;
       min-height: 100px;
       max-height: 90vh;
-      box-sizing: border-box; /* Added this line */
+      box-sizing: border-box;
     }
 
     #tradingview_chart {
@@ -127,6 +127,7 @@
     fetchSignal();
     setInterval(fetchSignal, 60000);
 
+    // सुधारित resizeBox फंक्शन: 
     function resizeBox(action) {
       const box = document.getElementById("signal-box");
       const style = window.getComputedStyle(box);
@@ -139,59 +140,21 @@
       const minHeight = 100;
       const maxHeight = window.innerHeight * 0.9;
 
-      let newWidth = currentWidth;
-      let newHeight = currentHeight;
-
       if (action === "increase") {
-        newWidth = Math.min(currentWidth + change, maxWidth);
-        newHeight = Math.min(currentHeight + change, maxHeight);
+        box.style.width = Math.min(currentWidth + change, maxWidth) + "px";
+        box.style.height = Math.min(currentHeight + change, maxHeight) + "px";
       } else if (action === "decrease") {
-        newWidth = Math.max(currentWidth - change, minWidth);
-        newHeight = Math.max(currentHeight - change, minHeight);
+        box.style.width = Math.max(currentWidth - change, minWidth) + "px";
+        box.style.height = Math.max(currentHeight - change, minHeight) + "px";
       }
-
-      box.style.width = newWidth + "px";
-      box.style.height = newHeight + "px";
     }
   </script>
 
   <script>
+    // ड्रॅग अँड ड्रॉप साठी मूळ कोडप्रमाणे
     const box = document.getElementById("signal-box");
     let isDragging = false, offsetX, offsetY;
 
     box.addEventListener("mousedown", e => {
-      isDragging = true;
-      offsetX = e.clientX - box.offsetLeft;
-      offsetY = e.clientY - box.offsetTop;
-    });
-
-    document.addEventListener("mousemove", e => {
-      if (isDragging) {
-        box.style.left = (e.clientX - offsetX) + "px";
-        box.style.top = (e.clientY - offsetY) + "px";
-        box.style.bottom = "auto";
-      }
-    });
-
-    document.addEventListener("mouseup", () => isDragging = false);
-
-    box.addEventListener("touchstart", e => {
-      isDragging = true;
-      const touch = e.touches[0];
-      offsetX = touch.clientX - box.offsetLeft;
-      offsetY = touch.clientY - box.offsetTop;
-    });
-
-    document.addEventListener("touchmove", e => {
-      if (isDragging) {
-        const touch = e.touches[0];
-        box.style.left = (touch.clientX - offsetX) + "px";
-        box.style.top = (touch.clientY - offsetY) + "px";
-        box.style.bottom = "auto";
-      }
-    });
-
-    document.addEventListener("touchend", () => isDragging = false);
-  </script>
-</body>
-</html>
+      isDragging = true
+      
