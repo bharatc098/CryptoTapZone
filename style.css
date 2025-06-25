@@ -59,3 +59,22 @@ body {
 .info-content p {
   margin: 5px 0;
 }
+.signal-box {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: sans-serif;
+  font-size: 14px;
+  z-index: 1000;
+  cursor: move;
+  width: 200px;
+}
+.signal-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
