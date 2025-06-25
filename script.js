@@ -155,3 +155,35 @@ function fetchChartData(symbol = 'XAUUSDT', interval = '1m') {
     });
 }
 fetchChartData(); // हे default 'XAUUSDT' आणि '1m' वापरेल
+function drawTradeLevels(type, candle) {
+  const entry = candle.close;
+  const stop = type === 'buy' ? candle.low : candle.high;
+  const target = type === 'buy'
+    ? entry + (entry - stop) * 1.5
+    : entry - (stop - entry) * 1.5;
+
+  chart.addLineSeries({ color: 'blue' }).setData([{ time: candle.time, value: entry }]);
+  chart.addLineSeries({ color: 'red' }).setData([{ time: candle.time, value: stop }]);
+  chart.addLineSeries({ color: 'green' }).setData([{ time: candle.time, value: target }]);
+}updateSignal()if (isBuySignal) {
+  chart.addMarker({
+    time: candle.time,
+    position: 'belowBar',
+    color: 'green',
+    shape: 'arrowUp',
+    text: 'Buy'
+  });
+  drawTradeLevels('buy', candle);
+}
+
+if (isSellSignal) {
+  chart.addMarker({
+    time: candle.time,
+    position: 'aboveBar',
+    color: 'red',
+    shape: 'arrowDown',
+    text: 'Sell'
+  });
+  drawTradeLevels('sell', candle);
+}
+
