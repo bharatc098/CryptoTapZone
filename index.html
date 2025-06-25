@@ -8,6 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
+  <div id="signal-box" class="signal-box">
+  <div class="signal-header">🔔 Trade Signal</div>
+  <div><strong>Direction:</strong> <span id="signal-direction">-</span></div>
+  <div><strong>Entry:</strong> <span id="signal-entry">-</span></div>
+  <div><strong>Stop Loss:</strong> <span id="signal-sl">-</span></div>
+  <div><strong>Target:</strong> <span id="signal-target">-</span></div>
+</div>
+  
   <div id="chart"></div>
   <div id="signal-box" class="draggable-box"></div>
   <script src="script.js"></script>
