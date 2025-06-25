@@ -97,3 +97,4 @@ async function fetchCandles() {
   drawChart(chartData); // तुमचं चार्ट update function
   updateSignal(chartData); // 👈 हे इथे कॉल करा
 }
+setInterval(fetchCandles, 60000); // दर 1 मिनिटाला update होईल
