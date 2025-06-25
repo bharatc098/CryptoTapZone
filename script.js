@@ -118,3 +118,19 @@ function plotSignalMarkers(chart, signals) {
 
   chart.addMarkers([...buySignals, ...sellSignals]);
 }
+function updateSignal(data) {
+  const signals = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const prev = data[i - 1];
+    const curr = data[i];
+
+    if (prev.sma22 < prev.close && curr.sma22 > curr.close) {
+      signals.push({ time: curr.time / 1000, type: 'sell' });
+    } else if (prev.sma22 > prev.close && curr.sma22 < curr.close) {
+      signals.push({ time: curr.time / 1000, type: 'buy' });
+    }
+  }
+
+  plotSignalMarkers(chart, signals); // 👈 हे इथे
+}
