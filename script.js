@@ -27,3 +27,23 @@ new TradingView.widget({
   },
   studies_overrides: {},
 });
+// Dragging Logic for Signal Box
+const signalBox = document.getElementById("signal-box");
+let isDragging = false, offsetX = 0, offsetY = 0;
+
+signalBox.addEventListener("mousedown", function (e) {
+  isDragging = true;
+  offsetX = e.clientX - signalBox.offsetLeft;
+  offsetY = e.clientY - signalBox.offsetTop;
+});
+
+document.addEventListener("mousemove", function (e) {
+  if (isDragging) {
+    signalBox.style.left = e.clientX - offsetX + "px";
+    signalBox.style.top = e.clientY - offsetY + "px";
+  }
+});
+
+document.addEventListener("mouseup", function () {
+  isDragging = false;
+});
