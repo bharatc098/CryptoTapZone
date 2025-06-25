@@ -1,200 +1,95 @@
-new TradingView.widget({
-  container_id: "tv_chart_container",
-  autosize: true,
-  symbol: "OANDA:XAUUSD",  // Default: GOLD
-  interval: "3",  // 3-minute timeframe
-  timezone: "Asia/Kolkata",
-  theme: "dark",
-  style: "1",
-  locale: "en",
-  toolbar_bg: "#000000",
-  enable_publishing: false,
-  hide_side_toolbar: false,
-  allow_symbol_change: true,
-  studies: [
-    "Moving Average@tv-basicstudies",   // 22 SMA
-    "Moving Average@tv-basicstudies",   // 33 SMA
-    "Moving Average@tv-basicstudies"    // 44 SMA
-  ],
-  overrides: {
-    "moving_average.linewidth": 2,
-    "moving_average_1.length": 22,
-    "moving_average_1.color": "#00FF00",
-    "moving_average_2.length": 33,
-    "moving_average_2.color": "#FFA500",
-    "moving_average_3.length": 44,
-    "moving_average_3.color": "#FF0000"
-  },
-  studies_overrides: {},
-});
-// Dragging Logic for Signal Box
-const signalBox = document.getElementById("signal-box");
-let isDragging = false, offsetX = 0, offsetY = 0;
+let chart, tvWidget;
 
-signalBox.addEventListener("mousedown", function (e) {
-  isDragging = true;
-  offsetX = e.clientX - signalBox.offsetLeft;
-  offsetY = e.clientY - signalBox.offsetTop;
-});
+function initChart() {
+  const container = document.getElementById('chart');
 
-document.addEventListener("mousemove", function (e) {
-  if (isDragging) {
-    signalBox.style.left = e.clientX - offsetX + "px";
-    signalBox.style.top = e.clientY - offsetY + "px";
-  }
-});
+  tvWidget = new TradingView.widget({
+    autosize: true,
+    symbol: 'BINANCE:XAUUSDT',
+    interval: '1',
+    container_id: container,
+    datafeed: new window.Datafeeds.UDFCompatibleDatafeed("https://demo_feed.tradingview.com"),
+    library_path: "https://unpkg.com/lightweight-charts@3.4.0/dist/",
+    locale: "en",
+    disabled_features: ["header_symbol_search", "timeframes_toolbar"],
+    enabled_features: ["study_templates"],
+    charts_storage_url: '',
+    charts_storage_api_version: "1.1",
+    client_id: 'CryptoTapZone',
+    user_id: 'public_user_id',
+    fullscreen: false,
+    studies_overrides: {},
+  });
 
-document.addEventListener("mouseup", function () {
-  isDragging = false;
-});
-function updateSignal(data) {
-  if (data.length < 5) return;
-
-  const lastCandle = data[data.length - 1];
-  const prevCandle = data[data.length - 2];
-
-  // Simple Moving Average (22)
-  const smaPeriod = 22;
-  const closes = data.slice(-smaPeriod).map(c => c.close);
-  const sma = closes.reduce((a, b) => a + b, 0) / smaPeriod;
-
-  const isSmaRising = closes[smaPeriod - 1] > closes[smaPeriod - 2];
-  const isSmaFalling = closes[smaPeriod - 1] < closes[smaPeriod - 2];
-
-  let direction = "-", entry = "-", sl = "-", target = "-";
-
-  if (lastCandle.close > sma && isSmaRising) {
-    direction = "BUY";
-    entry = lastCandle.close;
-    sl = lastCandle.low;
-    target = entry + (entry - sl) * 2;
-  } else if (lastCandle.close < sma && isSmaFalling) {
-    direction = "SELL";
-    entry = lastCandle.close;
-    sl = lastCandle.high;
-    target = entry - (sl - entry) * 2;
-  }
-
-  // Update box
-  document.getElementById("signal-direction").innerText = direction;
-  document.getElementById("signal-entry").innerText = entry.toFixed(2);
-  document.getElementById("signal-sl").innerText = sl.toFixed(2);
-  document.getElementById("signal-target").innerText = target.toFixed(2);
-}
-fetchCandles();
-
-async function fetchCandles() {
-  const response = await fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=100');
-  const json = await response.json();
-  const chartData = json.map(c => ({
-    time: c[0] / 1000,
-    open: parseFloat(c[1]),
-    high: parseFloat(c[2]),
-    low: parseFloat(c[3]),
-    close: parseFloat(c[4])
-  }));
-
-  drawChart(chartData); // तुमचं चार्ट update function
-  updateSignal(chartData); // 👈 हे इथे कॉल करा
-}
-setInterval(fetchCandles, 60000); // दर 1 मिनिटाला update होईल
-plotSignalMarkers
-function plotSignalMarkers(chart, signals) {
-  const buySignals = signals.filter(s => s.type === 'buy').map(s => ({
-    time: s.time,
-    position: 'belowBar',
-    color: 'green',
-    shape: 'arrowUp',
-    text: 'Buy'
-  }));
-
-  const sellSignals = signals.filter(s => s.type === 'sell').map(s => ({
-    time: s.time,
-    position: 'aboveBar',
-    color: 'red',
-    shape: 'arrowDown',
-    text: 'Sell'
-  }));
-
-  chart.addMarkers([...buySignals, ...sellSignals]);
-}
-function updateSignal(data) {
-  const signals = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const prev = data[i - 1];
-    const curr = data[i];
-
-    if (prev.sma22 < prev.close && curr.sma22 > curr.close) {
-      signals.push({ time: curr.time / 1000, type: 'sell' });
-    } else if (prev.sma22 > prev.close && curr.sma22 < curr.close) {
-      signals.push({ time: curr.time / 1000, type: 'buy' });
-    }
-  }
-
-  plotSignalMarkers(chart, signals); // 👈 हे इथे
-}
-function fetchChartData(symbol = 'XAUUSDT', interval = '1m') {
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=1000`;
-
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const chartData = data.map(d => ({
-        time: d[0] / 1000,
-        open: parseFloat(d[1]),
-        high: parseFloat(d[2]),
-        low: parseFloat(d[3]),
-        close: parseFloat(d[4]),
-        sma22: 0
-      }));
-
-      calculateSMA(chartData, 22, 'sma22');
-      chart.setData(chartData);
-      updateSignal(chartData);
+  setTimeout(() => {
+    chart = tvWidget.activeChart();
+    chart.onIntervalChanged().subscribe(null, function(interval) {
+      console.log("Interval changed to", interval);
     });
-}
-fetchChartData(); // हे default 'XAUUSDT' आणि '1m' वापरेल
-function drawTradeLevels(type, candle) {
-  const entry = candle.close;
-  const stop = type === 'buy' ? candle.low : candle.high;
-  const target = type === 'buy'
-    ? entry + (entry - stop) * 1.5
-    : entry - (stop - entry) * 1.5;
-
-  chart.addLineSeries({ color: 'blue' }).setData([{ time: candle.time, value: entry }]);
-  chart.addLineSeries({ color: 'red' }).setData([{ time: candle.time, value: stop }]);
-  chart.addLineSeries({ color: 'green' }).setData([{ time: candle.time, value: target }]);
-}updateSignal()if (isBuySignal) {
-  chart.addMarker({
-    time: candle.time,
-    position: 'belowBar',
-    color: 'green',
-    shape: 'arrowUp',
-    text: 'Buy'
-  });
-  drawTradeLevels('buy', candle);
+    startSignalMonitoring();
+  }, 3000);
 }
 
-if (isSellSignal) {
-  chart.addMarker({
-    time: candle.time,
-    position: 'aboveBar',
-    color: 'red',
-    shape: 'arrowDown',
-    text: 'Sell'
-  });
-  drawTradeLevels('sell', candle);
+function calculateSlope(data) {
+  const len = data.length;
+  if (len < 2) return 0;
+  return data[len - 1] - data[len - 2];
 }
-function updateInfoBox(type, entry, stop, target, time) {
-  const box = document.getElementById('infoBox');
-  box.innerHTML = `
-    <strong>Signal:</strong> ${type}<br>
-    <strong>Entry:</strong> ${entry}<br>
-    <strong>Stop-loss:</strong> ${stop}<br>
-    <strong>Target:</strong> ${target}<br>
-    <strong>Time:</strong> ${new Date(time * 1000).toLocaleTimeString()}
-  `;
-}
-drawTradeLevels()updateInfoBox(type, entry.toFixed(2), stop.toFixed(2), target.toFixed(2), candle.time);
 
+function updateSignal(chartData) {
+  const closingPrices = chartData.slice(-44).map(candle => candle.close);
+  if (closingPrices.length < 44) return;
+
+  const sma = (arr, len) => arr.slice(-len).reduce((a, b) => a + b, 0) / len;
+  const sma22 = sma(closingPrices, 22);
+  const sma33 = sma(closingPrices, 33);
+  const sma44 = sma(closingPrices, 44);
+  const slope22 = sma22 - sma(closingPrices.slice(0, -1), 22);
+
+  const lastPrice = closingPrices[closingPrices.length - 1];
+  const signalBox = document.getElementById('signal-box');
+
+  if (slope22 > 0 && lastPrice > sma22) {
+    signalBox.innerHTML = `<strong>BUY Signal</strong><br>Entry: ${lastPrice.toFixed(2)}<br>SL: ${(sma22 - 0.5).toFixed(2)}<br>Target: ${(lastPrice + 1).toFixed(2)}`;
+    signalBox.classList.add("green");
+    signalBox.classList.remove("red");
+  } else if (slope22 < 0 && lastPrice < sma22) {
+    signalBox.innerHTML = `<strong>SELL Signal</strong><br>Entry: ${lastPrice.toFixed(2)}<br>SL: ${(sma22 + 0.5).toFixed(2)}<br>Target: ${(lastPrice - 1).toFixed(2)}`;
+    signalBox.classList.add("red");
+    signalBox.classList.remove("green");
+  } else {
+    signalBox.innerHTML = "No clear signal";
+    signalBox.classList.remove("green", "red");
+  }
+}
+
+// Simulated data fetch loop
+function startSignalMonitoring() {
+  setInterval(() => {
+    fetchDummyChartData().then(updateSignal);
+  }, 5000);
+}
+
+// Dummy OHLC data generator
+function fetchDummyChartData() {
+  const now = Date.now();
+  const candles = [];
+
+  for (let i = 0; i < 60; i++) {
+    const base = 2300 + Math.sin(i / 10) * 5;
+    candles.push({
+      time: now - (60 - i) * 60 * 1000,
+      open: base,
+      high: base + Math.random(),
+      low: base - Math.random(),
+      close: base + (Math.random() - 0.5),
+      volume: Math.random() * 100
+    });
+  }
+
+  return Promise.resolve(candles);
+}
+
+window.onload = () => {
+  initChart();
+};
