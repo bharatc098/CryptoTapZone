@@ -134,3 +134,24 @@ function updateSignal(data) {
 
   plotSignalMarkers(chart, signals); // 👈 हे इथे
 }
+function fetchChartData(symbol = 'XAUUSDT', interval = '1m') {
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=1000`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const chartData = data.map(d => ({
+        time: d[0] / 1000,
+        open: parseFloat(d[1]),
+        high: parseFloat(d[2]),
+        low: parseFloat(d[3]),
+        close: parseFloat(d[4]),
+        sma22: 0
+      }));
+
+      calculateSMA(chartData, 22, 'sma22');
+      chart.setData(chartData);
+      updateSignal(chartData);
+    });
+}
+fetchChartData(); // हे default 'XAUUSDT' आणि '1m' वापरेल
