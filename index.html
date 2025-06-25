@@ -2,29 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CryptoTapZone - TractorJi Strategy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CryptoTapZone</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
-<body><div id="infoBox" class="draggable">
-  <strong>Signal:</strong> None<br>
-  <strong>Entry:</strong> -<br>
-  <strong>Stop-loss:</strong> -<br>
-  <strong>Target:</strong> -<br>
-  <strong>Time:</strong> -
-</div>
-  
-  <div id="signal-box" class="signal-box">
-  <div class="signal-header">🔔 Trade Signal</div>
-  <div><strong>Direction:</strong> <span id="signal-direction">-</span></div>
-  <div><strong>Entry:</strong> <span id="signal-entry">-</span></div>
-  <div><strong>Stop Loss:</strong> <span id="signal-sl">-</span></div>
-  <div><strong>Target:</strong> <span id="signal-target">-</span></div>
-</div>
-  
+<body>
   <div id="chart"></div>
-  <div id="signal-box" class="draggable-box"></div>
+
+  <div id="signal-box" class="draggable">
+    <strong>Signal:</strong> <span id="signal">Loading...</span><br/>
+    <strong>Symbol:</strong> <span id="symbol">XAUUSDT</span><br/>
+    <strong>Interval:</strong> <span id="interval">1m</span>
+  </div>
+
+  <!-- Lightweight Charts CDN -->
+  <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+
+  <!-- Custom Script -->
   <script src="script.js"></script>
 </body>
 </html>
