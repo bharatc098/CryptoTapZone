@@ -45,3 +45,43 @@ function createMovingAverage({ length, color }) {
 
 // make it global
 window.chartApi.createMovingAverage = createMovingAverage;
+function drawTradeLines({ entry, stopLoss, target }) {
+  removeTradeLines(); // आधीचे काढा
+
+  chartApi.createShape({
+    shape: 'line',
+    options: {
+      price: entry,
+      color: '#00ff00',
+      lineWidth: 2,
+      style: 0,
+      text: 'Entry',
+    }
+  });
+
+  chartApi.createShape({
+    shape: 'line',
+    options: {
+      price: stopLoss,
+      color: '#ff0000',
+      lineWidth: 2,
+      style: 2,
+      text: 'Stop Loss',
+    }
+  });
+
+  chartApi.createShape({
+    shape: 'line',
+    options: {
+      price: target,
+      color: '#0000ff',
+      lineWidth: 2,
+      style: 1,
+      text: 'Target',
+    }
+  });
+}
+
+function removeTradeLines() {
+  if (chartApi.removeShapes) chartApi.removeShapes();
+}
