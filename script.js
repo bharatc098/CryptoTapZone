@@ -98,3 +98,23 @@ async function fetchCandles() {
   updateSignal(chartData); // 👈 हे इथे कॉल करा
 }
 setInterval(fetchCandles, 60000); // दर 1 मिनिटाला update होईल
+plotSignalMarkers
+function plotSignalMarkers(chart, signals) {
+  const buySignals = signals.filter(s => s.type === 'buy').map(s => ({
+    time: s.time,
+    position: 'belowBar',
+    color: 'green',
+    shape: 'arrowUp',
+    text: 'Buy'
+  }));
+
+  const sellSignals = signals.filter(s => s.type === 'sell').map(s => ({
+    time: s.time,
+    position: 'aboveBar',
+    color: 'red',
+    shape: 'arrowDown',
+    text: 'Sell'
+  }));
+
+  chart.addMarkers([...buySignals, ...sellSignals]);
+}
