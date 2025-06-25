@@ -2,54 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CryptoTapZone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoTapZone - TractorJi Strategy</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
-  <div id="chart-container">
-    <div id="tvchart"></div>
-    <div id="signal-box" class="draggable">
-      <div id="signal-content">
-        <p><strong>Signal:</strong> <span id="signal-type">N/A</span></p>
-        <p><strong>Entry:</strong> <span id="entry-price">-</span></p>
-        <p><strong>Stop Loss:</strong> <span id="stop-loss">-</span></p>
-        <p><strong>Target:</strong> <span id="target-price">-</span></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- TradingView Widget -->
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    new TradingView.widget({
-      container_id: "tvchart",
-      autosize: true,
-      symbol: "OANDA:XAUUSD",
-      interval: "3",
-      timezone: "Asia/Kolkata",
-      theme: "dark",
-      style: "1",
-      locale: "en",
-      toolbar_bg: "#f1f3f6",
-      enable_publishing: false,
-      hide_top_toolbar: false,
-      save_image: false,
-      studies: [],
-      withdateranges: true,
-      hide_side_toolbar: false,
-    });
-  </script>
-
+  <div id="chart"></div>
+  <div id="signal-box" class="draggable-box"></div>
   <script src="script.js"></script>
 </body>
 </html>
-<div id="signalBox" class="info-box">
-  <div class="info-header">📊 Signal Info</div>
-  <div class="info-content">
-    <p><strong>Signal:</strong> Waiting...</p>
-    <p><strong>Entry:</strong> -</p>
-    <p><strong>Stop Loss:</strong> -</p>
-    <p><strong>Target:</strong> -</p>
-  </div>
-</div>
