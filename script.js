@@ -47,3 +47,37 @@ document.addEventListener("mousemove", function (e) {
 document.addEventListener("mouseup", function () {
   isDragging = false;
 });
+function updateSignal(data) {
+  if (data.length < 5) return;
+
+  const lastCandle = data[data.length - 1];
+  const prevCandle = data[data.length - 2];
+
+  // Simple Moving Average (22)
+  const smaPeriod = 22;
+  const closes = data.slice(-smaPeriod).map(c => c.close);
+  const sma = closes.reduce((a, b) => a + b, 0) / smaPeriod;
+
+  const isSmaRising = closes[smaPeriod - 1] > closes[smaPeriod - 2];
+  const isSmaFalling = closes[smaPeriod - 1] < closes[smaPeriod - 2];
+
+  let direction = "-", entry = "-", sl = "-", target = "-";
+
+  if (lastCandle.close > sma && isSmaRising) {
+    direction = "BUY";
+    entry = lastCandle.close;
+    sl = lastCandle.low;
+    target = entry + (entry - sl) * 2;
+  } else if (lastCandle.close < sma && isSmaFalling) {
+    direction = "SELL";
+    entry = lastCandle.close;
+    sl = lastCandle.high;
+    target = entry - (sl - entry) * 2;
+  }
+
+  // Update box
+  document.getElementById("signal-direction").innerText = direction;
+  document.getElementById("signal-entry").innerText = entry.toFixed(2);
+  document.getElementById("signal-sl").innerText = sl.toFixed(2);
+  document.getElementById("signal-target").innerText = target.toFixed(2);
+}
