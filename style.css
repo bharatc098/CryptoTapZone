@@ -34,3 +34,28 @@ body {
 #signal-box p {
   margin: 6px 0;
 }
+.info-box {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  width: 200px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  border: 2px solid #00ff99;
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 999;
+  cursor: move;
+  font-family: Arial, sans-serif;
+}
+
+.info-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #00ff99;
+  padding-bottom: 5px;
+}
+
+.info-content p {
+  margin: 5px 0;
+}
