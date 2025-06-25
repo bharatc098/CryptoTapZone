@@ -1,18 +1,5 @@
-new TradingView.widget({
-  container_id: "tv-chart",
-  autosize: true,
-  symbol: "NSE:NIFTY",
-  interval: "3",
-  timezone: "Asia/Kolkata",
-  theme: "dark",
-  style: "1",
-  locale: "en",
-  toolbar_bg: "#1e1e1e",
-  enable_publishing: false,
-  allow_symbol_change: true,
-  hide_legend: false,
-  studies: [
-    "ADX@tv-basicstudies",          // ADX default
-    "MAExp@tv-basicstudies",        // EMA (आपण नंतर 22 सेट करू)
-  ],
-});
+// script.js
+// सध्या script.js रिकामा ठेवत आहोत. पुढच्या स्टेप्समध्ये इथे सिग्नल लॉजिक, चार्ट ओव्हरले इत्यादी येतील.
+
+// पुढे यामध्ये आपल्या ट्रॅक्टरजी स्ट्रॅटेजीचं लॉजिक टाकणार आहोत.
+console.log("CryptoTapZone script loaded.");
