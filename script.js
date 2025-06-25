@@ -81,3 +81,19 @@ function updateSignal(data) {
   document.getElementById("signal-sl").innerText = sl.toFixed(2);
   document.getElementById("signal-target").innerText = target.toFixed(2);
 }
+fetchCandles();
+
+async function fetchCandles() {
+  const response = await fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=100');
+  const json = await response.json();
+  const chartData = json.map(c => ({
+    time: c[0] / 1000,
+    open: parseFloat(c[1]),
+    high: parseFloat(c[2]),
+    low: parseFloat(c[3]),
+    close: parseFloat(c[4])
+  }));
+
+  drawChart(chartData); // तुमचं चार्ट update function
+  updateSignal(chartData); // 👈 हे इथे कॉल करा
+}
