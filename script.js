@@ -18,3 +18,12 @@ document.addEventListener("mousemove", function(e) {
 document.addEventListener("mouseup", function() {
   isDragging = false;
 });
+function updateSignalBox(signal, entry, stopLoss, target) {
+  const box = document.querySelector('#signalBox .info-content');
+  box.innerHTML = `
+    <p><strong>Signal:</strong> ${signal}</p>
+    <p><strong>Entry:</strong> ${entry.toFixed(2)}</p>
+    <p><strong>Stop Loss:</strong> ${stopLoss.toFixed(2)}</p>
+    <p><strong>Target:</strong> ${target.toFixed(2)}</p>
+  `;
+}
