@@ -1,132 +1,34 @@
-// script.js
+let widget = new TradingView.widget({
+  container_id: "tvchart",
+  autosize: true,
+  symbol: "OANDA:XAUUSD", // GOLD chart
+  interval: "3", // 3 minute
+  timezone: "Asia/Kolkata",
+  theme: "dark",
+  style: "1",
+  locale: "en",
+  enable_publishing: false,
+  allow_symbol_change: true,
+  hide_top_toolbar: false,
+  hide_legend: false,
+  studies: [
+    "ADX@tv-basicstudies",           // ADX (default is 14, but we will change to 8)
+    "MAExp@tv-basicstudies",         // Moving Average Exponential (change to SMA 22 manually)
+  ],
+  overrides: {
+    "mainSeriesProperties.style": 1,
+    "paneProperties.background": "#000000",
+    "paneProperties.vertGridProperties.color": "#222",
+    "paneProperties.horzGridProperties.color": "#222",
+    "symbolWatermarkProperties.color": "rgba(0, 0, 0, 0)",
 
-let chart;
+    // Customize ADX to 8
+    "indicator_properties.ADX.input1": 8,
 
-function loadChart() {
-  const chartContainer = document.getElementById("tvchart");
+    // Customize MA to SMA 22 (you can change type from EMA to SMA manually on chart if not working here)
+    "moving average.ma.period": 22,
+    "moving average.ma.type": "SMA",
+    "moving average.ma.color": "#00FF00"
+  },
+});
 
-  chart = LightweightCharts.createChart(chartContainer, {
-    width: chartContainer.clientWidth,
-    height: 400,
-    layout: {
-      backgroundColor: "#000",
-      textColor: "#DDD",
-    },
-    grid: {
-      vertLines: { color: "#222" },
-      horzLines: { color: "#222" },
-    },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-    },
-    timeScale: {
-      timeVisible: true,
-      secondsVisible: false,
-    },
-  });
-
-  const candleSeries = chart.addCandlestickSeries();
-  const sma22Series = chart.addLineSeries({ color: "yellow", lineWidth: 2 });
-  const adxSeries = [];
-
-  fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=3m&limit=300')
-    .then(res => res.json())
-    .then(data => {
-      const candles = data.map(d => ({
-        time: d[0] / 1000,
-        open: parseFloat(d[1]),
-        high: parseFloat(d[2]),
-        low: parseFloat(d[3]),
-        close: parseFloat(d[4]),
-      }));
-
-      candleSeries.setData(candles);
-
-      // Calculate SMA 22
-      const sma22 = calculateSMA(candles, 22);
-      sma22Series.setData(sma22);
-
-      // Detect Signals
-      const signals = detectSignals(candles, sma22);
-      drawSignals(signals);
-    });
-}
-
-function calculateSMA(data, period) {
-  let sma = [];
-  for (let i = 0; i < data.length; i++) {
-    if (i < period) continue;
-    let sum = 0;
-    for (let j = i - period; j < i; j++) {
-      sum += data[j].close;
-    }
-    const avg = sum / period;
-    sma.push({ time: data[i].time, value: avg });
-  }
-  return sma;
-}
-
-function detectSignals(candles, smaData) {
-  let signals = [];
-  for (let i = 1; i < smaData.length; i++) {
-    const prevSma = smaData[i - 1].value;
-    const currSma = smaData[i].value;
-    const candle = candles.find(c => c.time === smaData[i].time);
-
-    const rising = currSma > prevSma;
-    const falling = currSma < prevSma;
-
-    if (rising && candle.close > currSma) {
-      signals.push({
-        type: 'buy',
-        time: candle.time,
-        entry: candle.close,
-        stop: candle.low,
-        target: candle.close + (candle.close - candle.low) * 2,
-      });
-    } else if (falling && candle.close < currSma) {
-      signals.push({
-        type: 'sell',
-        time: candle.time,
-        entry: candle.close,
-        stop: candle.high,
-        target: candle.close - (candle.high - candle.close) * 2,
-      });
-    }
-  }
-  return signals;
-}
-
-function drawSignals(signals) {
-  signals.forEach(sig => {
-    const color = sig.type === 'buy' ? 'green' : 'red';
-    const entryLine = {
-      price: sig.entry,
-      color,
-      lineWidth: 2,
-      lineStyle: LightweightCharts.LineStyle.Solid,
-      axisLabelVisible: true,
-      title: `${sig.type.toUpperCase()} ENTRY`,
-    };
-    const stopLine = {
-      price: sig.stop,
-      color: 'red',
-      lineWidth: 1,
-      axisLabelVisible: true,
-      title: 'STOP LOSS',
-    };
-    const targetLine = {
-      price: sig.target,
-      color: 'blue',
-      lineWidth: 1,
-      axisLabelVisible: true,
-      title: 'TARGET',
-    };
-
-    chart.addLineSeries().createPriceLine(entryLine);
-    chart.addLineSeries().createPriceLine(stopLine);
-    chart.addLineSeries().createPriceLine(targetLine);
-  });
-}
-
-document.addEventListener("DOMContentLoaded", loadChart);
