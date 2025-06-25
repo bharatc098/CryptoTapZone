@@ -31,3 +31,17 @@ function updateSignalBox(signal, entry, stopLoss, target) {
 chartApi.createMovingAverage({ length: 22, color: '#00ff00' }); // Green
 chartApi.createMovingAverage({ length: 33, color: '#0000ff' }); // Blue
 chartApi.createMovingAverage({ length: 44, color: '#ff0000' }); // Red
+function createMovingAverage({ length, color }) {
+  chartApi.createShape({
+    shape: 'moving_average',
+    options: {
+      length: length,
+      type: 'sma',
+      color: color,
+      lineWidth: 2,
+    }
+  });
+}
+
+// make it global
+window.chartApi.createMovingAverage = createMovingAverage;
