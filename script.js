@@ -27,3 +27,7 @@ function updateSignalBox(signal, entry, stopLoss, target) {
     <p><strong>Target:</strong> ${target.toFixed(2)}</p>
   `;
 }
+// Add SMA lines
+chartApi.createMovingAverage({ length: 22, color: '#00ff00' }); // Green
+chartApi.createMovingAverage({ length: 33, color: '#0000ff' }); // Blue
+chartApi.createMovingAverage({ length: 44, color: '#ff0000' }); // Red
