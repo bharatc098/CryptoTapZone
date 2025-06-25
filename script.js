@@ -186,4 +186,15 @@ if (isSellSignal) {
   });
   drawTradeLevels('sell', candle);
 }
+function updateInfoBox(type, entry, stop, target, time) {
+  const box = document.getElementById('infoBox');
+  box.innerHTML = `
+    <strong>Signal:</strong> ${type}<br>
+    <strong>Entry:</strong> ${entry}<br>
+    <strong>Stop-loss:</strong> ${stop}<br>
+    <strong>Target:</strong> ${target}<br>
+    <strong>Time:</strong> ${new Date(time * 1000).toLocaleTimeString()}
+  `;
+}
+drawTradeLevels()updateInfoBox(type, entry.toFixed(2), stop.toFixed(2), target.toFixed(2), candle.time);
 
