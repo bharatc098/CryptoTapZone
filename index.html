@@ -7,18 +7,12 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="chart"></div>
-
-  <div id="signal-box" class="draggable">
-    <strong>Signal:</strong> <span id="signal">Loading...</span><br/>
-    <strong>Symbol:</strong> <span id="symbol">XAUUSDT</span><br/>
-    <strong>Interval:</strong> <span id="interval">1m</span>
+  <div id="chart-container">
+    <div id="tv_chart_container"></div>
+    <div id="signal-info" class="draggable-box">Loading signal data...</div>
   </div>
 
-  <!-- Lightweight Charts CDN -->
-  <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
-
-  <!-- Custom Script -->
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
