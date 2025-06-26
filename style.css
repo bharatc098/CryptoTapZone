@@ -1,0 +1,19 @@
+/* Reset default styles */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* Make chart container fill the entire page */
+#chart-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Optional: Hide scrollbars */
+body {
+  overflow: hidden;
+  font-family: sans-serif;
+}
