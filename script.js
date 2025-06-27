@@ -204,3 +204,98 @@ function checkSignal(candles) {
 
   return signals;
 }
+drawTradeLevels()function drawTradeLevels(chart, series, signals, candles) {
+  signals.forEach(signal => {
+    const candle = candles.find(c => c.time === signal.time);
+    if (!candle) return;
+
+    const entry = candle.close;
+    const sl = signal.type === "buy" ? candle.low : candle.high;
+    const rr = 2; // risk-reward ratio
+
+    const target = signal.type === "buy"
+      ? entry + (entry - sl) * rr
+      : entry - (sl - entry) * rr;
+
+    // ENTRY line
+    chart.addLineSeries({
+      color: 'white',
+      lineWidth: 1,
+      priceLineVisible: true,
+    }).setData([{ time: signal.time, value: entry }]);
+
+    // SL line
+    chart.addLineSeries({
+      color: 'red',
+      lineWidth: 1,
+      priceLineVisible: true,
+    }).setData([{ time: signal.time, value: sl }]);
+
+    // TARGET line
+    chart.addLineSeries({
+      color: 'green',
+      lineWidth: 1,
+      priceLineVisible: true,
+    }).setData([{ time: signal.time, value: target }]);
+  });
+}
+updateChart()const signals = checkSignal(chartData);
+addSignalMarkers(chart, series, signals, chartData);
+drawTradeLevels(chart, series, signals, chartData);
+// Calculate SMA (Simple Moving Average)
+function calculateSMA(data, period = 22) {
+  const sma = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sma.push(null);
+    } else {
+      const sum = data.slice(i - period + 1, i + 1).reduce((a, c) => a + c.close, 0);
+      sma.push(sum / period);
+    }
+  }
+  return sma;
+}
+
+// Calculate ADX (simplified version)
+function calculateADX(data, period = 8) {
+  const adx = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period) {
+      adx.push(null);
+      continue;
+    }
+    let trSum = 0;
+    let pdmSum = 0;
+    let ndmSum = 0;
+
+    for (let j = i - period + 1; j <= i; j++) {
+      const current = data[j];
+      const previous = data[j - 1];
+
+      const highDiff = current.high - previous.high;
+      const lowDiff = previous.low - current.low;
+
+      const pdm = highDiff > lowDiff && highDiff > 0 ? highDiff : 0;
+      const ndm = lowDiff > highDiff && lowDiff > 0 ? lowDiff : 0;
+
+      const tr = Math.max(
+        current.high - current.low,
+        Math.abs(current.high - previous.close),
+        Math.abs(current.low - previous.close)
+      );
+
+      pdmSum += pdm;
+      ndmSum += ndm;
+      trSum += tr;
+    }
+
+    const pdi = (pdmSum / trSum) * 100;
+    const ndi = (ndmSum / trSum) * 100;
+    const dx = (Math.abs(pdi - ndi) / (pdi + ndi)) * 100;
+    adx.push(dx);
+  }
+  return adx;
+}
+const sma22 = calculateSMA(chartData, 22);
+const adx8 = calculateADX(chartData, 8);
+const signals = checkSignal(chartData, sma22, adx8);
