@@ -140,3 +140,10 @@ const signals = checkSignal(candles);
 
 // Draw signal arrows
 addSignalMarkers(chart, candleSeries, signals, candles);
+// script.js
+
+const defaultSymbol = "XAUUSDT"; // GOLD
+const defaultInterval = "1m";
+
+// वेबसाईट लोड होताच हे symbol आणि interval वापरून डेटा लोड करा
+fetchCandleData(defaultSymbol, defaultInterval);
