@@ -147,3 +147,23 @@ const defaultInterval = "1m";
 
 // वेबसाईट लोड होताच हे symbol आणि interval वापरून डेटा लोड करा
 fetchCandleData(defaultSymbol, defaultInterval);
+function fetchCandleData(symbol, interval) {
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const candles = data.map(d => ({
+        time: d[0] / 1000,
+        open: parseFloat(d[1]),
+        high: parseFloat(d[2]),
+        low: parseFloat(d[3]),
+        close: parseFloat(d[4]),
+      }));
+
+      candleSeries.setData(candles);
+
+      const signals = checkSignal(candles);
+      addSignalMarkers(chart, candleSeries, signals, candles);
+    });
+}
