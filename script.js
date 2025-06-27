@@ -135,3 +135,8 @@ function addSignalMarkers(chart, series, signals, candleData) {
 
   series.setMarkers(markers);
 }
+// Assume 'candles' is your OHLC array
+const signals = checkSignal(candles);
+
+// Draw signal arrows
+addSignalMarkers(chart, candleSeries, signals, candles);
