@@ -121,3 +121,17 @@ function checkSignal(data) {
 
   return signals;
 }
+function addSignalMarkers(chart, series, signals, candleData) {
+  const markers = signals.map(signal => {
+    const time = candleData[signal.index].time;
+    return {
+      time: time,
+      position: signal.type === "BUY" ? 'belowBar' : 'aboveBar',
+      color: signal.type === "BUY" ? 'green' : 'red',
+      shape: signal.type === "BUY" ? 'arrowUp' : 'arrowDown',
+      text: signal.type
+    };
+  });
+
+  series.setMarkers(markers);
+}
