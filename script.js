@@ -101,3 +101,23 @@ function drawSignals(candles, sma, adx) {
     }
   }
 }
+// Function to check signals (Tractor Ji Strategy)
+function checkSignal(data) {
+  let signals = [];
+
+  for (let i = 22; i < data.length; i++) {
+    const sma22 = data.slice(i - 22, i).reduce((sum, d) => sum + d.close, 0) / 22;
+    const currentClose = data[i].close;
+
+    // Mock ADX logic: use close-to-close movement as pseudo strength (replace with real later)
+    const adx = Math.abs(data[i].close - data[i - 1].close) * 10;
+
+    if (currentClose > sma22 && adx > 20) {
+      signals.push({ index: i, type: "BUY", price: currentClose });
+    } else if (currentClose < sma22 && adx > 20) {
+      signals.push({ index: i, type: "SELL", price: currentClose });
+    }
+  }
+
+  return signals;
+}
