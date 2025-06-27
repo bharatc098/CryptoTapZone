@@ -167,3 +167,40 @@ function fetchCandleData(symbol, interval) {
       addSignalMarkers(chart, candleSeries, signals, candles);
     });
 }
+addSignalMarkers()function addSignalMarkers(chart, series, signals, candles) {
+  const markers = signals.map(signal => {
+    const candle = candles.find(c => c.time === signal.time);
+
+    return {
+      time: signal.time,
+      position: signal.type === "buy" ? "belowBar" : "aboveBar",
+      color: signal.type === "buy" ? "green" : "red",
+      shape: signal.type === "buy" ? "arrowUp" : "arrowDown",
+      text: signal.type.toUpperCase(),
+    };
+  });
+
+  series.setMarkers(markers);
+}
+function checkSignal(candles) {
+  const signals = [];
+
+  for (let i = 22; i < candles.length; i++) {
+    const prev = candles[i - 1];
+    const curr = candles[i];
+
+    const sma = candles
+      .slice(i - 21, i + 1)
+      .reduce((sum, c) => sum + c.close, 0) / 22;
+
+    const adxFake = Math.random() * 40; // Placeholder ADX value
+
+    if (curr.close > sma && adxFake > 20) {
+      signals.push({ time: curr.time, type: "buy" });
+    } else if (curr.close < sma && adxFake > 20) {
+      signals.push({ time: curr.time, type: "sell" });
+    }
+  }
+
+  return signals;
+}
