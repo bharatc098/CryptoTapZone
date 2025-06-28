@@ -1,17 +1,13 @@
-* {
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  background-color: black;
 }
 
-body, html {
-  width: 100%;
-  height: 100%;
-  background-color: #0d1117;
-  font-family: Arial, sans-serif;
-}
-
-#chart {
-  width: 100vw;
-  height: 100vh;
+.chart-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
