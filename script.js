@@ -424,3 +424,104 @@ function drawSignals(chart, series, chartData) {
     });
 }
 updateChartData()drawSignals(chart, candleSeries, processedData);
+function checkTractorJiSignal(data) {
+  const period = 22;
+
+  for (let i = period; i < data.length; i++) {
+    const price = data[i].close;
+    const prevPrice = data[i - 1].close;
+
+    // Calculate 22 SMA
+    const sma = data.slice(i - period, i).reduce((sum, d) => sum + d.close, 0) / period;
+    const prevSma = data.slice(i - period - 1, i - 1).reduce((sum, d) => sum + d.close, 0) / period;
+
+    // Dummy ADX value
+    const adx = 25; // Future step: calculate real ADX
+    const isAdxAbove20 = adx > 20;
+
+    // BUY condition
+    if (price > sma && prevSma < sma && isAdxAbove20) {
+      drawBuySellArrow(data[i].time, data[i].low, 'buy');
+    }
+
+    // SELL condition
+    if (price < sma && prevSma > sma && isAdxAbove20) {
+      drawBuySellArrow(data[i].time, data[i].high, 'sell');
+    }
+  }
+}
+fetchChartData().then(data => {
+  updateChart(data);
+  checkTractorJiSignal(data);  // 🎯 येथे कॉल करा
+});
+function calculateADX(data, period = 8) {
+  let adxValues = [];
+
+  let trList = [], plusDMList = [], minusDMList = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const highDiff = data[i].high - data[i - 1].high;
+    const lowDiff = data[i - 1].low - data[i].low;
+
+    let plusDM = (highDiff > lowDiff && highDiff > 0) ? highDiff : 0;
+    let minusDM = (lowDiff > highDiff && lowDiff > 0) ? lowDiff : 0;
+
+    const tr = Math.max(
+      data[i].high - data[i].low,
+      Math.abs(data[i].high - data[i - 1].close),
+      Math.abs(data[i].low - data[i - 1].close)
+    );
+
+    trList.push(tr);
+    plusDMList.push(plusDM);
+    minusDMList.push(minusDM);
+  }
+
+  let smoothedTR = trList.slice(0, period).reduce((a, b) => a + b, 0);
+  let smoothedPlusDM = plusDMList.slice(0, period).reduce((a, b) => a + b, 0);
+  let smoothedMinusDM = minusDMList.slice(0, period).reduce((a, b) => a + b, 0);
+
+  for (let i = period; i < trList.length; i++) {
+    smoothedTR = smoothedTR - (smoothedTR / period) + trList[i];
+    smoothedPlusDM = smoothedPlusDM - (smoothedPlusDM / period) + plusDMList[i];
+    smoothedMinusDM = smoothedMinusDM - (smoothedMinusDM / period) + minusDMList[i];
+
+    const plusDI = 100 * (smoothedPlusDM / smoothedTR);
+    const minusDI = 100 * (smoothedMinusDM / smoothedTR);
+    const dx = 100 * (Math.abs(plusDI - minusDI) / (plusDI + minusDI));
+
+    if (i === period) {
+      adxValues.push(dx);
+    } else {
+      const prevADX = adxValues[adxValues.length - 1];
+      const adx = ((prevADX * (period - 1)) + dx) / period;
+      adxValues.push(adx);
+    }
+  }
+
+  return adxValues;
+}
+checkTractorJiSignalfunction checkTractorJiSignal(data) {
+  const period = 22;
+  const adxPeriod = 8;
+  const adxValues = calculateADX(data, adxPeriod);
+
+  for (let i = period; i < data.length; i++) {
+    const price = data[i].close;
+    const prevPrice = data[i - 1].close;
+
+    const sma = data.slice(i - period, i).reduce((sum, d) => sum + d.close, 0) / period;
+    const prevSma = data.slice(i - period - 1, i - 1).reduce((sum, d) => sum + d.close, 0) / period;
+
+    const adx = adxValues[i - period];
+    const isAdxAbove20 = adx > 20;
+
+    if (price > sma && prevSma < sma && isAdxAbove20) {
+      drawBuySellArrow(data[i].time, data[i].low, 'buy');
+    }
+
+    if (price < sma && prevSma > sma && isAdxAbove20) {
+      drawBuySellArrow(data[i].time, data[i].high, 'sell');
+    }
+  }
+}
