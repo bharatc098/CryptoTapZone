@@ -525,3 +525,204 @@ checkTractorJiSignalfunction checkTractorJiSignal(data) {
     }
   }
 }
+drawSMALine()let smaSeries = null;
+
+function drawSMALine(data, period = 22) {
+  if (!chart) return;
+
+  if (smaSeries) {
+    chart.removeSeries(smaSeries);
+  }
+
+  smaSeries = chart.addLineSeries({
+    color: 'orange',
+    lineWidth: 2,
+    title: `SMA ${period}`,
+  });
+
+  const smaData = [];
+  for (let i = period; i < data.length; i++) {
+    const sma = data.slice(i - period, i).reduce((sum, d) => sum + d.close, 0) / period;
+    smaData.push({
+      time: data[i].time,
+      value: parseFloat(sma.toFixed(2)),
+    });
+  }
+
+  smaSeries.setData(smaData);
+}
+updateChart()updateSignal(chartData); // आधीच आहे
+drawSMALine(chartData);  // हे नवीन टाका
+let adxLabel = null;
+
+function drawADXText(data, period = 8) {
+  if (!chart) return;
+
+  if (adxLabel) {
+    chart.removePriceLine(adxLabel);
+    adxLabel = null;
+  }
+
+  const adxValues = [];
+
+  for (let i = period; i < data.length; i++) {
+    const highSlice = data.slice(i - period, i).map(d => d.high);
+    const lowSlice = data.slice(i - period, i).map(d => d.low);
+    const closeSlice = data.slice(i - period, i).map(d => d.close);
+
+    const trList = [];
+    const dmPlusList = [];
+    const dmMinusList = [];
+
+    for (let j = 1; j < period; j++) {
+      const highDiff = highSlice[j] - highSlice[j - 1];
+      const lowDiff = lowSlice[j - 1] - lowSlice[j];
+
+      const plusDM = highDiff > lowDiff && highDiff > 0 ? highDiff : 0;
+      const minusDM = lowDiff > highDiff && lowDiff > 0 ? lowDiff : 0;
+
+      const tr = Math.max(
+        highSlice[j] - lowSlice[j],
+        Math.abs(highSlice[j] - closeSlice[j - 1]),
+        Math.abs(lowSlice[j] - closeSlice[j - 1])
+      );
+
+      dmPlusList.push(plusDM);
+      dmMinusList.push(minusDM);
+      trList.push(tr);
+    }
+
+    const sumTR = trList.reduce((a, b) => a + b, 0);
+    const sumPlusDM = dmPlusList.reduce((a, b) => a + b, 0);
+    const sumMinusDM = dmMinusList.reduce((a, b) => a + b, 0);
+
+    const plusDI = (sumPlusDM / sumTR) * 100;
+    const minusDI = (sumMinusDM / sumTR) * 100;
+    const dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI)) * 100;
+
+    adxValues.push(dx);
+  }
+
+  const lastADX = parseFloat(adxValues[adxValues.length - 1].toFixed(2));
+  const lastCandle = data[data.length - 1];
+
+  adxLabel = chart.addPriceLine({
+    price: lastCandle.close,
+    color: 'purple',
+    lineWidth: 1,
+    lineStyle: 2,
+    axisLabelVisible: true,
+    title: `ADX: ${lastADX}`,
+  });
+    }
+updateSignal(chartData)updateSignal(chartData);
+drawSMALine(chartData);
+drawADXText(chartData);
+function drawSignals(data, smaPeriod = 22, adxPeriod = 8) {
+  if (!chart) return;
+
+  const buySignals = [];
+  const sellSignals = [];
+
+  for (let i = smaPeriod; i < data.length - 1; i++) {
+    const smaPrev = data.slice(i - smaPeriod, i).reduce((sum, d) => sum + d.close, 0) / smaPeriod;
+    const smaCurr = data.slice(i - smaPeriod + 1, i + 1).reduce((sum, d) => sum + d.close, 0) / smaPeriod;
+    const smaRising = smaCurr > smaPrev;
+    const smaFalling = smaCurr < smaPrev;
+
+    const candle = data[i];
+    const close = candle.close;
+
+    const highSlice = data.slice(i - adxPeriod, i).map(d => d.high);
+    const lowSlice = data.slice(i - adxPeriod, i).map(d => d.low);
+    const closeSlice = data.slice(i - adxPeriod, i).map(d => d.close);
+
+    const trList = [];
+    const dmPlusList = [];
+    const dmMinusList = [];
+
+    for (let j = 1; j < adxPeriod; j++) {
+      const highDiff = highSlice[j] - highSlice[j - 1];
+      const lowDiff = lowSlice[j - 1] - lowSlice[j];
+
+      const plusDM = highDiff > lowDiff && highDiff > 0 ? highDiff : 0;
+      const minusDM = lowDiff > highDiff && lowDiff > 0 ? lowDiff : 0;
+
+      const tr = Math.max(
+        highSlice[j] - lowSlice[j],
+        Math.abs(highSlice[j] - closeSlice[j - 1]),
+        Math.abs(lowSlice[j] - closeSlice[j - 1])
+      );
+
+      dmPlusList.push(plusDM);
+      dmMinusList.push(minusDM);
+      trList.push(tr);
+    }
+
+    const sumTR = trList.reduce((a, b) => a + b, 0);
+    const sumPlusDM = dmPlusList.reduce((a, b) => a + b, 0);
+    const sumMinusDM = dmMinusList.reduce((a, b) => a + b, 0);
+
+    const plusDI = (sumPlusDM / sumTR) * 100;
+    const minusDI = (sumMinusDM / sumTR) * 100;
+    const dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI)) * 100;
+
+    // Buy Signal
+    if (smaRising && close >= smaCurr && dx > 20) {
+      buySignals.push({ time: candle.time / 1000, position: 'belowBar', color: 'green', shape: 'arrowUp', text: 'BUY' });
+    }
+
+    // Sell Signal
+    if (smaFalling && close <= smaCurr && dx > 20) {
+      sellSignals.push({ time: candle.time / 1000, position: 'aboveBar', color: 'red', shape: 'arrowDown', text: 'SELL' });
+    }
+  }
+
+  const signalSeries = chart.addLineSeries({ priceLineVisible: false });
+
+  buySignals.forEach(signal => {
+    signalSeries.setMarkers([signal]);
+  });
+
+  sellSignals.forEach(signal => {
+    signalSeries.setMarkers([signal]);
+  });
+}
+updateSignal(chartData);
+drawSMALine(chartData);
+drawADXText(chartData);
+drawSignals(chartData);
+function drawEntrySLTarget(data, signals) {
+  if (!chart) return;
+
+  signals.forEach(signal => {
+    const candle = data.find(d => Math.floor(d.time / 1000) === signal.time);
+    if (!candle) return;
+
+    const entry = candle.close;
+    let sl, target;
+
+    if (signal.text === 'BUY') {
+      sl = candle.low;
+      target = entry + (entry - sl) * 1.5;
+    } else if (signal.text === 'SELL') {
+      sl = candle.high;
+      target = entry - (sl - entry) * 1.5;
+    }
+
+    const slLine = chart.addLineSeries({
+      color: 'orange',
+      lineWidth: 1,
+      priceLineVisible: false
+    });
+    slLine.setData([{ time: signal.time, value: sl }]);
+
+    const targetLine = chart.addLineSeries({
+      color: 'blue',
+      lineWidth: 1,
+      priceLineVisible: false
+    });
+    targetLine.setData([{ time: signal.time, value: target }]);
+  });
+}
+drawEntrySLTarget(data, buySignals.concat(sellSignals));
