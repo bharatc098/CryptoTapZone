@@ -402,3 +402,25 @@ async function updateChartData() {
         console.error("Data fetch error:", err);
     }
 }
+function drawSignals(chart, series, chartData) {
+    chartData.forEach(data => {
+        if (data.signal === 'buy') {
+            chart.addShape({
+                time: data.time,
+                position: 'belowBar',
+                color: 'green',
+                shape: 'arrowUp',
+                text: 'BUY'
+            });
+        } else if (data.signal === 'sell') {
+            chart.addShape({
+                time: data.time,
+                position: 'aboveBar',
+                color: 'red',
+                shape: 'arrowDown',
+                text: 'SELL'
+            });
+        }
+    });
+}
+updateChartData()drawSignals(chart, candleSeries, processedData);
