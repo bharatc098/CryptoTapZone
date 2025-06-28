@@ -149,3 +149,123 @@ async function main() {
 }
 
 main();
+// ✅ Final script.js - Full working version with ADX + SMA + Buy/Sell signals
+
+let chart;
+let adxSeries = [];
+let smaSeries = [];
+let buySignals = [];
+let sellSignals = [];
+let stopLossLines = [];
+let targetLines = [];
+
+function calculateSMA(data, period) {
+  let sma = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sma.push(null);
+    } else {
+      let sum = 0;
+      for (let j = 0; j < period; j++) {
+        sum += data[i - j].close;
+      }
+      sma.push(sum / period);
+    }
+  }
+  return sma;
+}
+
+function calculateADX(data, period = 8) {
+  let adx = [];
+  let prevHigh = data[0].high;
+  let prevLow = data[0].low;
+  let prevClose = data[0].close;
+  let trList = [], plusDMList = [], minusDMList = [], dxList = [];
+
+  for (let i = 1; i < data.length; i++) {
+    let high = data[i].high;
+    let low = data[i].low;
+    let close = data[i].close;
+
+    let tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    trList.push(tr);
+
+    let plusDM = high - prevHigh > prevLow - low && high - prevHigh > 0 ? high - prevHigh : 0;
+    let minusDM = prevLow - low > high - prevHigh && prevLow - low > 0 ? prevLow - low : 0;
+    plusDMList.push(plusDM);
+    minusDMList.push(minusDM);
+
+    prevHigh = high;
+    prevLow = low;
+    prevClose = close;
+  }
+
+  for (let i = 0; i < trList.length; i++) {
+    if (i < period - 1) {
+      dxList.push(null);
+      continue;
+    }
+    let trSum = trList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+    let plusDMSum = plusDMList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+    let minusDMSum = minusDMList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+
+    let plusDI = (plusDMSum / trSum) * 100;
+    let minusDI = (minusDMSum / trSum) * 100;
+    let dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI)) * 100;
+    dxList.push(dx);
+  }
+
+  for (let i = 0; i < dxList.length; i++) {
+    if (i < period * 2 - 2) {
+      adx.push(null);
+    } else {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        sum += dxList[j];
+      }
+      adx.push(sum / period);
+    }
+  }
+  adx.unshift(null);
+  return adx;
+}
+
+function updateSignal(chartData) {
+  const sma = calculateSMA(chartData, 22);
+  const adx = calculateADX(chartData);
+  smaSeries = [];
+  adxSeries = [];
+  buySignals = [];
+  sellSignals = [];
+  stopLossLines = [];
+  targetLines = [];
+
+  for (let i = 0; i < chartData.length; i++) {
+    const bar = chartData[i];
+    if (!sma[i] || !adx[i]) continue;
+
+    smaSeries.push({ time: bar.time, value: sma[i] });
+    adxSeries.push({ time: bar.time, value: adx[i] });
+
+    const isSmaRising = sma[i] > sma[i - 1];
+    const isSmaFalling = sma[i] < sma[i - 1];
+
+    if (adx[i] > 20 && isSmaRising && bar.close > sma[i]) {
+      buySignals.push({ time: bar.time, position: "aboveBar", color: "green", shape: "arrowUp", text: "BUY" });
+      stopLossLines.push({ time: bar.time, value: bar.low, color: 'red', label: 'SL' });
+      targetLines.push({ time: bar.time, value: bar.close + (bar.close - bar.low) * 1.5, color: 'green', label: 'TARGET' });
+    }
+
+    if (adx[i] > 20 && isSmaFalling && bar.close < sma[i]) {
+      sellSignals.push({ time: bar.time, position: "belowBar", color: "red", shape: "arrowDown", text: "SELL" });
+      stopLossLines.push({ time: bar.time, value: bar.high, color: 'red', label: 'SL' });
+      targetLines.push({ time: bar.time, value: bar.close - (bar.high - bar.close) * 1.5, color: 'green', label: 'TARGET' });
+    }
+  }
+
+  // draw overlays (handled in chart drawing script)
+}
