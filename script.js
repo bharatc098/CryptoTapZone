@@ -299,3 +299,69 @@ function calculateADX(data, period = 8) {
 const sma22 = calculateSMA(chartData, 22);
 const adx8 = calculateADX(chartData, 8);
 const signals = checkSignal(chartData, sma22, adx8);
+// Sample signal logic for Tractor Ji strategy
+function checkTractorJiSignals(data) {
+    const signals = [];
+
+    for (let i = 22; i < data.length; i++) {
+        const adx = data[i].adx; // ADX (8 period) value
+        const sma = data[i].sma; // SMA (22 period)
+        const close = data[i].close;
+        const prevClose = data[i - 1].close;
+
+        // BUY condition: ADX > 20 and price bouncing from SMA
+        if (adx > 20 && close > sma && data[i - 1].close <= sma) {
+            signals.push({
+                time: data[i].time,
+                type: 'buy',
+                price: close,
+                stopLoss: close - 1.5, // example SL
+                target: close + 3,     // example target
+            });
+        }
+
+        // SELL condition: ADX > 20 and price falling from SMA
+        else if (adx > 20 && close < sma && data[i - 1].close >= sma) {
+            signals.push({
+                time: data[i].time,
+                type: 'sell',
+                price: close,
+                stopLoss: close + 1.5,
+                target: close - 3,
+            });
+        }
+    }
+
+    return signals;
+}
+
+// Draw arrows and SL/Target lines
+function drawSignalsToChart(signals, chart) {
+    signals.forEach((signal) => {
+        const arrowSeries = chart.addShape({
+            time: signal.time,
+            position: 'aboveBar',
+            shape: signal.type === 'buy' ? 'arrowUp' : 'arrowDown',
+            color: signal.type === 'buy' ? 'green' : 'red',
+            text: signal.type.toUpperCase(),
+        });
+
+        chart.createMultipointShape([
+            { time: signal.time, price: signal.stopLoss },
+            { time: signal.time + 1, price: signal.stopLoss },
+        ], {
+            shape: 'line',
+            color: 'red',
+            text: 'SL',
+        });
+
+        chart.createMultipointShape([
+            { time: signal.time, price: signal.target },
+            { time: signal.time + 1, price: signal.target },
+        ], {
+            shape: 'line',
+            color: 'green',
+            text: 'Target',
+        });
+    });
+}
