@@ -365,3 +365,40 @@ function drawSignalsToChart(signals, chart) {
         });
     });
 }
+async function updateChartData() {
+    try {
+        const response = await fetch(`https://api.coingecko.com/api/v3/coins/binance-smart-chain/market_chart?vs_currency=usd&days=1&interval=minute`);
+        const rawData = await response.json();
+
+        const prices = rawData.prices;
+        const chartData = prices.map(([time, price]) => ({
+            time: Math.floor(time / 1000), // UNIX timestamp in seconds
+            close: price,
+        }));
+
+        // Calculate SMA 22
+        for (let i = 21; i < chartData.length; i++) {
+            let sum = 0;
+            for (let j = i - 21; j <= i; j++) {
+                sum += chartData[j].close;
+            }
+            chartData[i].sma = sum / 22;
+        }
+
+        // Calculate ADX (simplified dummy logic for now)
+        for (let i = 8; i < chartData.length; i++) {
+            chartData[i].adx = 25 + Math.random() * 10; // dummy ADX for example
+        }
+
+        // Draw chart
+        const lineSeries = chart.addLineSeries();
+        lineSeries.setData(chartData);
+
+        // Apply Tractor Ji strategy
+        const signals = checkTractorJiSignals(chartData);
+        drawSignalsToChart(signals, chart);
+
+    } catch (err) {
+        console.error("Data fetch error:", err);
+    }
+}
