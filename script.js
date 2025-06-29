@@ -1,7 +1,6 @@
 window.onload = function () {
   let currentSymbol = "XAUUSD";
 
-  // Load TradingView Chart
   function loadChart(symbol) {
     document.getElementById("tv_chart_container").innerHTML = "";
 
@@ -15,32 +14,24 @@ window.onload = function () {
       theme: "dark",
       style: "1",
       locale: "en",
-      withdateranges: false,
-      hide_side_toolbar: false,
-      allow_symbol_change: false,
-      save_image: false,
-      show_popup_button: false,
       studies: [
-        "ADX@tv-basicstudies",     // ADX default
-        "MASimple@tv-basicstudies" // Simple Moving Average (SMA)
+        "MASimple@tv-basicstudies",  // Simple Moving Average
+        "ADX@tv-basicstudies"        // ADX
       ],
-      overrides: {
-        "study_Overlay@tv-basicstudies.linewidth": 2
-      }
+      overrides: {},
     });
 
-    // TEMPORARY — Simulated signal
+    // सिग्नल टाकतो (डेमो)
     updateSignal(54321, 54000, 55000);
   }
 
-  // Update signal box
   function updateSignal(entry, sl, target) {
     document.getElementById("entry").innerText = entry;
     document.getElementById("stoploss").innerText = sl;
     document.getElementById("target").innerText = target;
   }
 
-  // Theme switch
+  // Theme बदल
   document.getElementById("themeToggle").onclick = () => {
     const body = document.body;
     if (body.classList.contains("theme-black")) {
@@ -52,13 +43,13 @@ window.onload = function () {
     }
   };
 
-  // Symbol switch
+  // Symbol बदल
   document.getElementById("symbolSelector").onchange = (e) => {
     currentSymbol = e.target.value;
     loadChart(currentSymbol);
   };
 
-  // Draggable Box Logic
+  // Draggable बॉक्स
   const box = document.getElementById("signalBox");
   let isDragging = false;
   let offset = { x: 0, y: 0 };
@@ -80,6 +71,6 @@ window.onload = function () {
     isDragging = false;
   });
 
-  // Initial chart load
+  // सुरुवातीचा चार्ट लोड करा
   loadChart(currentSymbol);
 };
