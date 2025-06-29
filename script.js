@@ -74,3 +74,8 @@ window.onload = function () {
   // सुरुवातीचा चार्ट लोड करा
   loadChart(currentSymbol);
 };
+const adxSeries = chart.addLineSeries({
+  color: 'orange',
+  lineWidth: 2,
+});
+adxSeries.setData(adxData);
