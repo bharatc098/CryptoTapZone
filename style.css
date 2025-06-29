@@ -49,3 +49,15 @@ select {
   background-color: #003366;
   color: #fff;
 }
+function calculateADX(data, period = 8) {
+  let adxData = [];
+
+  // Simplified ADX calculation
+  for (let i = period; i < data.length; i++) {
+    // Dummy placeholder logic (real ADX calculation is more complex)
+    let value = Math.random() * 50; // Replace with actual logic
+    adxData.push({ time: data[i].time, value: value });
+  }
+
+  return adxData;
+}
