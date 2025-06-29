@@ -1,271 +1,132 @@
-let chart;
-
-async function fetchData() {
-  const response = await fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=500');
-  const rawData = await response.json();
-
-  const data = rawData.map(item => ({
-    time: item[0] / 1000,
-    open: parseFloat(item[1]),
-    high: parseFloat(item[2]),
-    low: parseFloat(item[3]),
-    close: parseFloat(item[4]),
-  }));
-
-  return data;
-}
-
-function calculateSMA(data, period) {
-  return data.map((_, i) => {
-    if (i < period) return null;
-    const sum = data.slice(i - period, i).reduce((a, b) => a + b.close, 0);
-    return sum / period;
-  });
-}
-
-function calculateADX(data, period = 8) {
-  const adx = [];
-  let prevHigh = data[0].high;
-  let prevLow = data[0].low;
-  let prevClose = data[0].close;
-
-  let trList = [], plusDMList = [], minusDMList = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const high = data[i].high;
-    const low = data[i].low;
-    const close = data[i].close;
-
-    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
-    const plusDM = high - prevHigh > low - prevLow && high - prevHigh > 0 ? high - prevHigh : 0;
-    const minusDM = low - prevLow > high - prevHigh && low - prevLow > 0 ? prevLow - low : 0;
-
-    trList.push(tr);
-    plusDMList.push(plusDM);
-    minusDMList.push(minusDM);
-
-    prevHigh = high;
-    prevLow = low;
-    prevClose = close;
-  }
-
-  for (let i = 0; i < trList.length; i++) {
-    if (i < period) {
-      adx.push(null);
-      continue;
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tractor Ji Strategy - Forex & Indian Market</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow: hidden;
+      transition: background 0.3s;
     }
-
-    const atr = trList.slice(i - period, i).reduce((a, b) => a + b, 0) / period;
-    const plusDI = (plusDMList.slice(i - period, i).reduce((a, b) => a + b, 0) / atr) * 100;
-    const minusDI = (minusDMList.slice(i - period, i).reduce((a, b) => a + b, 0) / atr) * 100;
-    const dx = Math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100;
-
-    adx.push(dx);
-  }
-
-  return adx;
-}
-
-function detectSignals(data, sma, adx) {
-  const buySignals = [];
-  const sellSignals = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const prev = data[i - 1];
-    const curr = data[i];
-
-    if (!sma[i] || !adx[i]) continue;
-
-    const entry = curr.close;
-
-    if (curr.close > sma[i] && sma[i] > sma[i - 1] && adx[i] > 20) {
-      buySignals.push({ time: curr.time, value: entry, text: 'BUY' });
+    #tv_chart_container {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
-
-    if (curr.close < sma[i] && sma[i] < sma[i - 1] && adx[i] > 20) {
-      sellSignals.push({ time: curr.time, value: entry, text: 'SELL' });
+    #controls {
+      position: fixed;
+      top: 5px;
+      left: 5px;
+      z-index: 10;
     }
-  }
-
-  return { buySignals, sellSignals };
-}
-
-function drawSignals(series, signals) {
-  signals.forEach(signal => {
-    series.setMarkers([{
-      time: signal.time,
-      position: signal.text === 'BUY' ? 'belowBar' : 'aboveBar',
-      color: signal.text === 'BUY' ? 'lime' : 'red',
-      shape: signal.text === 'BUY' ? 'arrowUp' : 'arrowDown',
-      text: signal.text,
-    }]);
-  });
-}
-
-function drawEntrySLTarget(data, signals) {
-  if (!chart) return;
-
-  signals.forEach(signal => {
-    const candle = data.find(d => Math.floor(d.time) === signal.time);
-    if (!candle) return;
-
-    const entry = candle.close;
-    let sl, target;
-
-    if (signal.text === 'BUY') {
-      sl = candle.low;
-      target = entry + (entry - sl) * 1.5;
-    } else if (signal.text === 'SELL') {
-      sl = candle.high;
-      target = entry - (sl - entry) * 1.5;
+    #symbolSelector, #themeToggle {
+      padding: 6px 10px;
+      margin-right: 6px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
     }
+    #themeToggle {
+      background: #444;
+      color: white;
+    }
+    .draggable {
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #ccc;
+      color: white;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: move;
+      z-index: 20;
+      width: 180px;
+    }
+    body.theme-black {
+      background: #000;
+    }
+    body.theme-grey {
+      background: #1e1e1e;
+    }
+    body.theme-blue {
+      background: #0D1B2A;
+    }
+  </style>
+</head>
+<body class="theme-black">  <!-- Symbol Selector + Theme Switcher -->  <div id="controls">
+    <select id="symbolSelector">
+      <option value="XAUUSD">XAUUSD</option>
+      <option value="EURUSD">EURUSD</option>
+      <option value="GBPUSD">GBPUSD</option>
+      <option value="USDJPY">USDJPY</option>
+      <option value="NSE:BANKNIFTY">BANKNIFTY</option>
+      <option value="NSE:NIFTY">NIFTY</option>
+      <option value="NSE:RELIANCE">RELIANCE</option>
+      <option value="NSE:TCS">TCS</option>
+    </select>
+    <button id="themeToggle">🎨</button>
+  </div>  <!-- TradingView Widget -->  <div id="tv_chart_container"></div>  <!-- Draggable Entry/SL/Target Box -->  <div id="signalBox" class="draggable">
+    <p>📍 <strong>Entry:</strong> <span id="entry">0000</span></p>
+    <p>🛑 <strong>Stop Loss:</strong> <span id="stoploss">0000</span></p>
+    <p>🎯 <strong>Target:</strong> <span id="target">0000</span></p>
+  </div>  <!-- Scripts -->  <script src="https://s3.tradingview.com/tv.js"></script>  <script>
+    // Theme switch
+    let themes = ['theme-black', 'theme-grey', 'theme-blue'];
+    let currentTheme = 0;
+    document.getElementById('themeToggle').onclick = () => {
+      document.body.classList.remove(themes[currentTheme]);
+      currentTheme = (currentTheme + 1) % themes.length;
+      document.body.classList.add(themes[currentTheme]);
+    };
 
-    const slLine = chart.addLineSeries({ color: 'orange', lineWidth: 1 });
-    slLine.setData([{ time: signal.time, value: sl }]);
+    // TradingView embed
+    function loadTradingView(symbol = 'XAUUSD') {
+      document.getElementById('tv_chart_container').innerHTML = '';
+      new TradingView.widget({
+        container_id: 'tv_chart_container',
+        autosize: true,
+        symbol: symbol,
+        interval: '3',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        enable_publishing: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: false,
+        studies: ['ADX@tv-basicstudies', 'MASimple@tv-basicstudies'],
+        overrides: {
+          'mainSeriesProperties.style': 1,
+        }
+      });
+    }
+    loadTradingView();
 
-    const targetLine = chart.addLineSeries({ color: 'blue', lineWidth: 1 });
-    targetLine.setData([{ time: signal.time, value: target }]);
-  });
-}
+    // Symbol change
+    document.getElementById('symbolSelector').onchange = function () {
+      loadTradingView(this.value);
+    };
 
-async function main() {
-  const data = await fetchData();
+    // Draggable box
+    let box = document.getElementById("signalBox");
+    let isDown = false, offset = [0, 0];
 
-  chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout: { background: { color: 'black' }, textColor: 'white' },
-    grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
-    timeScale: { timeVisible: true, secondsVisible: true },
-  });
-
-  const series = chart.addCandlestickSeries();
-  series.setData(data);
-
-  const sma = calculateSMA(data, 22);
-  const adx = calculateADX(data);
-
-  const { buySignals, sellSignals } = detectSignals(data, sma, adx);
-  drawSignals(series, buySignals.concat(sellSignals));
-  drawEntrySLTarget(data, buySignals.concat(sellSignals));
-}
-
-main();
-// ✅ Final script.js - Full working version with ADX + SMA + Buy/Sell signals
-
-let chart;
-let adxSeries = [];
-let smaSeries = [];
-let buySignals = [];
-let sellSignals = [];
-let stopLossLines = [];
-let targetLines = [];
-
-function calculateSMA(data, period) {
-  let sma = [];
-  for (let i = 0; i < data.length; i++) {
-    if (i < period - 1) {
-      sma.push(null);
-    } else {
-      let sum = 0;
-      for (let j = 0; j < period; j++) {
-        sum += data[i - j].close;
+    box.addEventListener('mousedown', function(e) {
+      isDown = true;
+      offset = [box.offsetLeft - e.clientX, box.offsetTop - e.clientY];
+    });
+    document.addEventListener('mouseup', () => isDown = false);
+    document.addEventListener('mousemove', function(e) {
+      e.preventDefault();
+      if (isDown) {
+        box.style.left = (e.clientX + offset[0]) + 'px';
+        box.style.top = (e.clientY + offset[1]) + 'px';
       }
-      sma.push(sum / period);
-    }
-  }
-  return sma;
-}
-
-function calculateADX(data, period = 8) {
-  let adx = [];
-  let prevHigh = data[0].high;
-  let prevLow = data[0].low;
-  let prevClose = data[0].close;
-  let trList = [], plusDMList = [], minusDMList = [], dxList = [];
-
-  for (let i = 1; i < data.length; i++) {
-    let high = data[i].high;
-    let low = data[i].low;
-    let close = data[i].close;
-
-    let tr = Math.max(
-      high - low,
-      Math.abs(high - prevClose),
-      Math.abs(low - prevClose)
-    );
-    trList.push(tr);
-
-    let plusDM = high - prevHigh > prevLow - low && high - prevHigh > 0 ? high - prevHigh : 0;
-    let minusDM = prevLow - low > high - prevHigh && prevLow - low > 0 ? prevLow - low : 0;
-    plusDMList.push(plusDM);
-    minusDMList.push(minusDM);
-
-    prevHigh = high;
-    prevLow = low;
-    prevClose = close;
-  }
-
-  for (let i = 0; i < trList.length; i++) {
-    if (i < period - 1) {
-      dxList.push(null);
-      continue;
-    }
-    let trSum = trList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-    let plusDMSum = plusDMList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-    let minusDMSum = minusDMList.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-
-    let plusDI = (plusDMSum / trSum) * 100;
-    let minusDI = (minusDMSum / trSum) * 100;
-    let dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI)) * 100;
-    dxList.push(dx);
-  }
-
-  for (let i = 0; i < dxList.length; i++) {
-    if (i < period * 2 - 2) {
-      adx.push(null);
-    } else {
-      let sum = 0;
-      for (let j = i - period + 1; j <= i; j++) {
-        sum += dxList[j];
-      }
-      adx.push(sum / period);
-    }
-  }
-  adx.unshift(null);
-  return adx;
-}
-
-function updateSignal(chartData) {
-  const sma = calculateSMA(chartData, 22);
-  const adx = calculateADX(chartData);
-  smaSeries = [];
-  adxSeries = [];
-  buySignals = [];
-  sellSignals = [];
-  stopLossLines = [];
-  targetLines = [];
-
-  for (let i = 0; i < chartData.length; i++) {
-    const bar = chartData[i];
-    if (!sma[i] || !adx[i]) continue;
-
-    smaSeries.push({ time: bar.time, value: sma[i] });
-    adxSeries.push({ time: bar.time, value: adx[i] });
-
-    const isSmaRising = sma[i] > sma[i - 1];
-    const isSmaFalling = sma[i] < sma[i - 1];
-
-    if (adx[i] > 20 && isSmaRising && bar.close > sma[i]) {
-      buySignals.push({ time: bar.time, position: "aboveBar", color: "green", shape: "arrowUp", text: "BUY" });
-      stopLossLines.push({ time: bar.time, value: bar.low, color: 'red', label: 'SL' });
-      targetLines.push({ time: bar.time, value: bar.close + (bar.close - bar.low) * 1.5, color: 'green', label: 'TARGET' });
-    }
-
-    if (adx[i] > 20 && isSmaFalling && bar.close < sma[i]) {
-      sellSignals.push({ time: bar.time, position: "belowBar", color: "red", shape: "arrowDown", text: "SELL" });
-      stopLossLines.push({ time: bar.time, value: bar.high, color: 'red', label: 'SL' });
-      targetLines.push({ time: bar.time, value: bar.close - (bar.high - bar.close) * 1.5, color: 'green', label: 'TARGET' });
-    }
-  }
-
-  // draw overlays (handled in chart drawing script)
-}
+    });
+  </script></body>
+</html>
