@@ -1,1 +1,57 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
 
+#tv_chart_container {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#controls {
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+}
+
+#symbolSelector, #themeToggle {
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#signalBox {
+  position: fixed;
+  top: 100px;
+  left: 20px;
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  z-index: 20;
+  cursor: move;
+  width: 180px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Themes */
+body.theme-black {
+  background-color: #000;
+}
+
+body.theme-grey {
+  background-color: #1e1e1e;
+}
+
+body.theme-blue {
+  background-color: #001f3f;
+}
