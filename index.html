@@ -2,9 +2,7 @@
 <html>
 <head>
   <title>Trading Strategy</title>
-  <!-- Lightweight Charts CDN -->
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-
   <style>
     body { margin: 0; background: black; }
     #chart { width: 100vw; height: 100vh; }
@@ -24,33 +22,26 @@
 </head>
 <body>
   <div id="chart"></div>
-
   <div id="signalBox">
     <div><strong>Entry:</strong> <span id="entryPrice">--</span></div>
     <div><strong>Stoploss:</strong> <span id="stoplossPrice">--</span></div>
     <div><strong>Target:</strong> <span id="targetPrice">--</span></div>
   </div>
-
-  <!-- Main Script -->
   <script src="script.js"></script>
-
-  <!-- Draggable Box Script -->
   <script>
+    // Draggable logic
     const box = document.getElementById("signalBox");
     let isDragging = false, offsetX, offsetY;
-
     box.addEventListener("mousedown", (e) => {
       isDragging = true;
       offsetX = e.clientX - box.offsetLeft;
       offsetY = e.clientY - box.offsetTop;
     });
-
     document.addEventListener("mousemove", (e) => {
       if (!isDragging) return;
       box.style.left = e.clientX - offsetX + "px";
       box.style.top = e.clientY - offsetY + "px";
     });
-
     document.addEventListener("mouseup", () => isDragging = false);
   </script>
 </body>
