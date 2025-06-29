@@ -2,13 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CryptoTapZone</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tractor Ji Strategy</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div id="chart" class="chart-container"></div>
+<body class="theme-black">
+
+  <!-- Top Controls -->
+  <div id="controls">
+    <select id="symbolSelector">
+      <option value="XAUUSD">XAUUSD</option>
+      <option value="EURUSD">EURUSD</option>
+      <option value="NSE:BANKNIFTY">BANKNIFTY</option>
+      <option value="NSE:NIFTY">NIFTY</option>
+    </select>
+    <button id="themeToggle">🎨</button>
+  </div>
+
+  <!-- Chart Container -->
+  <div id="tv_chart_container"></div>
+
+  <!-- Entry/SL/Target Box -->
+  <div id="signalBox" class="draggable">
+    <p>📍 <strong>Entry:</strong> <span id="entry">0000</span></p>
+    <p>🛑 <strong>Stoploss:</strong> <span id="stoploss">0000</span></p>
+    <p>🎯 <strong>Target:</strong> <span id="target">0000</span></p>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
