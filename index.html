@@ -1,37 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Tractor Ji Strategy</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://s3.tradingview.com/tv.js"></script>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body class="theme-black">
-    <div id="controls">
-      <select id="symbolSelector">
-        <option value="XAUUSD">GOLD (XAUUSD)</option>
-        <option value="USDJPY">USDJPY</option>
-        <option value="NSE:NIFTY">NIFTY</option>
-        <option value="NSE:BANKNIFTY">BANKNIFTY</option>
-      </select>
-      <button id="themeToggle">🎨 Theme</button>
-    </div>
+<head>
+  <title>Trading Strategy</title>
+  <!-- Lightweight Charts CDN -->
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
-    <div id="tv_chart_container"></div>
+  <style>
+    body { margin: 0; background: black; }
+    #chart { width: 100vw; height: 100vh; }
+    #signalBox {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: #222;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #666;
+      cursor: move;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
 
-    <div id="signalBox">
-      <h2>📈 सिग्नल</h2>
-      <p>एंट्री: <span id="entry">Loading...</span></p>
-      <p>स्टॉप लॉस: <span id="stoploss">--</span></p>
-      <p>टार्गेट: <span id="target">--</span></p>
-    </div>
+  <div id="signalBox">
+    <div><strong>Entry:</strong> <span id="entryPrice">--</span></div>
+    <div><strong>Stoploss:</strong> <span id="stoplossPrice">--</span></div>
+    <div><strong>Target:</strong> <span id="targetPrice">--</span></div>
+  </div>
 
-    <script src="script.js"></script>
-  </body>
+  <!-- Main Script -->
+  <script src="script.js"></script>
+
+  <!-- Draggable Box Script -->
+  <script>
+    const box = document.getElementById("signalBox");
+    let isDragging = false, offsetX, offsetY;
+
+    box.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      offsetX = e.clientX - box.offsetLeft;
+      offsetY = e.clientY - box.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      box.style.left = e.clientX - offsetX + "px";
+      box.style.top = e.clientY - offsetY + "px";
+    });
+
+    document.addEventListener("mouseup", () => isDragging = false);
+  </script>
+</body>
 </html>
-<div id="signalBox" class="draggable">
-  <p><strong>Entry:</strong> <span id="entryPrice">--</span></p>
-  <p><strong>Stoploss:</strong> <span id="stoplossPrice">--</span></p>
-  <p><strong>Target:</strong> <span id="targetPrice">--</span></p>
-</div>
