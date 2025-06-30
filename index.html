@@ -34,8 +34,10 @@
   </style>
 </head>
 <body>
+  <!-- TradingView Chart -->
   <div id="tv_chart_container"></div>
 
+  <!-- Signal Box -->
   <div id="signal-box">
     <strong>BUY Signal</strong><br>
     Entry: 2345<br>
@@ -43,9 +45,9 @@
     Target: 2380
   </div>
 
+  <!-- TradingView Chart Script -->
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
-    // Create TradingView chart
     new TradingView.widget({
       container_id: "tv_chart_container",
       autosize: true,
@@ -57,13 +59,18 @@
       locale: "en",
       toolbar_bg: "#f1f3f6",
       enable_publishing: false,
-      hide_legend: false,
       allow_symbol_change: true,
-      details: true,
-      studies: ["MA@tv-basicstudies", "ADX@tv-basicstudies"],
+      hide_side_toolbar: false,
+      withdateranges: true,
+      studies: [
+        "MAExp@tv-basicstudies",      // EMA by default (we can change to SMA)
+        "ADX@tv-basicstudies"         // ADX Indicator
+      ],
     });
+  </script>
 
-    // Draggable Signal Box Code
+  <!-- Draggable Box Script (Mobile + Desktop) -->
+  <script>
     const box = document.getElementById('signal-box');
     let isDragging = false, offsetX = 0, offsetY = 0;
 
