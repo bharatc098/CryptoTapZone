@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TractorJi Strategy - GOLD Chart</title>
+  <title>TractorJi Strategy Chart</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       overflow: hidden;
-      font-family: sans-serif;
     }
 
     #tv_chart_container {
@@ -24,30 +23,55 @@
       left: 20px;
       background: white;
       border: 2px solid #000;
-      border-radius: 10px;
       padding: 12px;
+      border-radius: 10px;
       z-index: 1000;
       max-width: 90vw;
       cursor: move;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <!-- TradingView Chart -->
   <div id="tv_chart_container"></div>
+  <div id="signal-box">Loading signal...</div>
 
-  <!-- Signal Box -->
-  <div id="signal-box">
-    <strong>BUY Signal</strong><br>
-    Entry: 2345<br>
-    Stoploss: 2330<br>
-    Target: 2380
-  </div>
-
-  <!-- TradingView Chart Script -->
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
+    const box = document.getElementById('signal-box');
+
+    // Drag logic
+    let isDragging = false, offsetX = 0, offsetY = 0;
+    box.addEventListener('mousedown', startDrag);
+    box.addEventListener('touchstart', startDrag);
+    function startDrag(e) {
+      e.preventDefault();
+      isDragging = true;
+      const event = e.touches ? e.touches[0] : e;
+      offsetX = event.clientX - box.offsetLeft;
+      offsetY = event.clientY - box.offsetTop;
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('touchmove', onDrag);
+      document.addEventListener('touchend', stopDrag);
+    }
+    function onDrag(e) {
+      if (!isDragging) return;
+      const event = e.touches ? e.touches[0] : e;
+      box.style.left = `${event.clientX - offsetX}px`;
+      box.style.top = `${event.clientY - offsetY}px`;
+    }
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('touchend', stopDrag);
+    }
+
+    // Chart
     new TradingView.widget({
       container_id: "tv_chart_container",
       autosize: true,
@@ -60,50 +84,53 @@
       toolbar_bg: "#f1f3f6",
       enable_publishing: false,
       allow_symbol_change: true,
-      hide_side_toolbar: false,
-      withdateranges: true,
+      details: true,
       studies: [
-        "MAExp@tv-basicstudies",      // EMA by default (we can change to SMA)
-        "ADX@tv-basicstudies"         // ADX Indicator
+        { id: "MASimple@tv-basicstudies", inputs: { length: 22 } },
+        { id: "ADX@tv-basicstudies", inputs: { length: 8 } }
       ],
+      overrides: {},
+      loading_screen: { backgroundColor: "#fff", foregroundColor: "#000" },
+      custom_indicators_getter: () => Promise.resolve([]),
+      events: {
+        onReady: function () {
+          const chart = TradingView.onreadyWidgets[0].activeChart();
+          chart.onDataLoaded().then(() => {
+            const bars = chart.getVisibleBars();
+            chart.getBars(chart.symbol(), chart.interval(), bars.from, bars.to, function (data) {
+              if (!data || data.length < 2) return;
+              const lastBar = data[data.length - 1];
+              const prevBar = data[data.length - 2];
+
+              // Dummy ADX/SMA logic since real values aren't available via API
+              // We simulate them here
+              const price = lastBar.close;
+              const smaNow = (data.slice(-22).reduce((sum, b) => sum + b.close, 0)) / 22;
+              const smaPrev = (data.slice(-23, -1).reduce((sum, b) => sum + b.close, 0)) / 22;
+
+              const smaRising = smaNow > smaPrev;
+              const adxDummy = 25; // static >20 for demo
+
+              const nearSMA = Math.abs(price - smaNow) < (price * 0.002); // 0.2% near
+
+              if (adxDummy > 20 && smaRising && nearSMA) {
+                const entry = lastBar.close.toFixed(2);
+                const stoploss = lastBar.low.toFixed(2);
+                const risk = entry - stoploss;
+                const target = (parseFloat(entry) + 2 * risk).toFixed(2);
+
+                box.innerHTML = `<strong>BUY Signal</strong><br>
+                  Entry: ${entry}<br>
+                  Stoploss: ${stoploss}<br>
+                  Target: ${target}`;
+              } else {
+                box.innerHTML = `No signal at the moment`;
+              }
+            });
+          });
+        }
+      }
     });
-  </script>
-
-  <!-- Draggable Box Script (Mobile + Desktop) -->
-  <script>
-    const box = document.getElementById('signal-box');
-    let isDragging = false, offsetX = 0, offsetY = 0;
-
-    function startDrag(e) {
-      e.preventDefault();
-      isDragging = true;
-      const event = e.touches ? e.touches[0] : e;
-      offsetX = event.clientX - box.offsetLeft;
-      offsetY = event.clientY - box.offsetTop;
-
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchmove', onDrag);
-      document.addEventListener('touchend', stopDrag);
-    }
-
-    function onDrag(e) {
-      if (!isDragging) return;
-      const event = e.touches ? e.touches[0] : e;
-      box.style.left = `${event.clientX - offsetX}px`;
-      box.style.top = `${event.clientY - offsetY}px`;
-    }
-
-    function stopDrag() {
-      isDragging = false;
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
-
-    box.addEventListener('mousedown', startDrag);
-    box.addEventListener('touchstart', startDrag);
   </script>
 </body>
 </html>
