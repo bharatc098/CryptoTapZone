@@ -3,134 +3,175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TractorJi Strategy Chart</title>
+  <title>TractoTrade</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      font-family: sans-serif; background: #fff;
     }
-
-    #tv_chart_container {
-      width: 100%;
-      height: 100%;
+    #chart {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     }
-
     #signal-box {
-      position: absolute;
-      top: 60px;
-      left: 20px;
-      background: white;
-      border: 2px solid #000;
-      padding: 12px;
-      border-radius: 10px;
-      z-index: 1000;
-      max-width: 90vw;
-      cursor: move;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      font-family: sans-serif;
-      font-size: 14px;
+      position: absolute; top: 60px; left: 20px;
+      background: white; border: 2px solid black;
+      padding: 12px; border-radius: 10px;
+      z-index: 1000; cursor: move;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+      min-width: 180px; font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div id="tv_chart_container"></div>
+  <canvas id="chart"></canvas>
   <div id="signal-box">Loading signal...</div>
 
-  <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
-    const box = document.getElementById('signal-box');
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+    const box = document.getElementById("signal-box");
 
-    // Drag logic
-    let isDragging = false, offsetX = 0, offsetY = 0;
-    box.addEventListener('mousedown', startDrag);
-    box.addEventListener('touchstart', startDrag);
-    function startDrag(e) {
-      e.preventDefault();
-      isDragging = true;
-      const event = e.touches ? e.touches[0] : e;
-      offsetX = event.clientX - box.offsetLeft;
-      offsetY = event.clientY - box.offsetTop;
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchmove', onDrag);
-      document.addEventListener('touchend', stopDrag);
-    }
-    function onDrag(e) {
-      if (!isDragging) return;
-      const event = e.touches ? e.touches[0] : e;
-      box.style.left = `${event.clientX - offsetX}px`;
-      box.style.top = `${event.clientY - offsetY}px`;
-    }
-    function stopDrag() {
-      isDragging = false;
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
 
-    // Chart
-    new TradingView.widget({
-      container_id: "tv_chart_container",
-      autosize: true,
-      symbol: "OANDA:XAUUSD",
-      interval: "1",
-      timezone: "Etc/UTC",
-      theme: "light",
-      style: "1",
-      locale: "en",
-      toolbar_bg: "#f1f3f6",
-      enable_publishing: false,
-      allow_symbol_change: true,
-      details: true,
-      studies: [
-        { id: "MASimple@tv-basicstudies", inputs: { length: 22 } },
-        { id: "ADX@tv-basicstudies", inputs: { length: 8 } }
-      ],
-      overrides: {},
-      loading_screen: { backgroundColor: "#fff", foregroundColor: "#000" },
-      custom_indicators_getter: () => Promise.resolve([]),
-      events: {
-        onReady: function () {
-          const chart = TradingView.onreadyWidgets[0].activeChart();
-          chart.onDataLoaded().then(() => {
-            const bars = chart.getVisibleBars();
-            chart.getBars(chart.symbol(), chart.interval(), bars.from, bars.to, function (data) {
-              if (!data || data.length < 2) return;
-              const lastBar = data[data.length - 1];
-              const prevBar = data[data.length - 2];
+    let candles = [];
 
-              // Dummy ADX/SMA logic since real values aren't available via API
-              // We simulate them here
-              const price = lastBar.close;
-              const smaNow = (data.slice(-22).reduce((sum, b) => sum + b.close, 0)) / 22;
-              const smaPrev = (data.slice(-23, -1).reduce((sum, b) => sum + b.close, 0)) / 22;
-
-              const smaRising = smaNow > smaPrev;
-              const adxDummy = 25; // static >20 for demo
-
-              const nearSMA = Math.abs(price - smaNow) < (price * 0.002); // 0.2% near
-
-              if (adxDummy > 20 && smaRising && nearSMA) {
-                const entry = lastBar.close.toFixed(2);
-                const stoploss = lastBar.low.toFixed(2);
-                const risk = entry - stoploss;
-                const target = (parseFloat(entry) + 2 * risk).toFixed(2);
-
-                box.innerHTML = `<strong>BUY Signal</strong><br>
-                  Entry: ${entry}<br>
-                  Stoploss: ${stoploss}<br>
-                  Target: ${target}`;
-              } else {
-                box.innerHTML = `No signal at the moment`;
-              }
-            });
-          });
-        }
+    // Draggable box
+    let dragging = false, offsetX, offsetY;
+    box.addEventListener("mousedown", e => {
+      dragging = true;
+      offsetX = e.clientX - box.offsetLeft;
+      offsetY = e.clientY - box.offsetTop;
+    });
+    document.addEventListener("mousemove", e => {
+      if (dragging) {
+        box.style.left = (e.clientX - offsetX) + "px";
+        box.style.top = (e.clientY - offsetY) + "px";
       }
     });
+    document.addEventListener("mouseup", () => dragging = false);
+
+    async function fetchData() {
+      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=100');
+      const data = await res.json();
+      candles = data.map(c => ({
+        time: c[0],
+        open: parseFloat(c[1]),
+        high: parseFloat(c[2]),
+        low: parseFloat(c[3]),
+        close: parseFloat(c[4])
+      }));
+      drawChart();
+      updateSignal();
+    }
+
+    function calcSMA(data, period) {
+      if (data.length < period) return null;
+      let sum = 0;
+      for (let i = data.length - period; i < data.length; i++) {
+        sum += data[i].close;
+      }
+      return sum / period;
+    }
+
+    function calcADX(data, period = 8) {
+      if (data.length < period + 1) return null;
+
+      let trArr = [], plusDM = [], minusDM = [];
+
+      for (let i = 1; i < data.length; i++) {
+        const curr = data[i];
+        const prev = data[i - 1];
+        const highDiff = curr.high - prev.high;
+        const lowDiff = prev.low - curr.low;
+
+        const plus = (highDiff > lowDiff && highDiff > 0) ? highDiff : 0;
+        const minus = (lowDiff > highDiff && lowDiff > 0) ? lowDiff : 0;
+
+        const tr = Math.max(
+          curr.high - curr.low,
+          Math.abs(curr.high - prev.close),
+          Math.abs(curr.low - prev.close)
+        );
+
+        trArr.push(tr);
+        plusDM.push(plus);
+        minusDM.push(minus);
+      }
+
+      const sumTR = trArr.slice(-period).reduce((a, b) => a + b, 0);
+      const sumPlusDM = plusDM.slice(-period).reduce((a, b) => a + b, 0);
+      const sumMinusDM = minusDM.slice(-period).reduce((a, b) => a + b, 0);
+
+      const plusDI = (sumPlusDM / sumTR) * 100;
+      const minusDI = (sumMinusDM / sumTR) * 100;
+      const dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI)) * 100;
+
+      let adxSum = 0;
+      for (let i = 0; i < period; i++) {
+        adxSum += dx;
+      }
+
+      return adxSum / period;
+    }
+
+    function updateSignal() {
+      const len = candles.length;
+      const latest = candles[len - 1];
+      const previous = candles[len - 2];
+
+      const smaNow = calcSMA(candles, 22);
+      const smaPrev = calcSMA(candles.slice(0, -1), 22);
+      const adx = calcADX(candles, 8);
+
+      const nearSMA = Math.abs(latest.close - smaNow) < (latest.close * 0.002);
+      const smaRising = smaNow > smaPrev;
+
+      if (adx > 20 && smaRising && nearSMA) {
+        const entry = latest.close.toFixed(2);
+        const stop = latest.low.toFixed(2);
+        const risk = entry - stop;
+        const target = (parseFloat(entry) + 2 * risk).toFixed(2);
+        box.innerHTML = `<strong>BUY Signal</strong><br>Entry: ${entry}<br>Stoploss: ${stop}<br>Target: ${target}`;
+      } else {
+        box.innerHTML = `No valid signal`;
+      }
+    }
+
+    function drawChart() {
+      ctx.clearRect(0, 0, width, height);
+      const margin = 60;
+      const chartW = width - margin * 2;
+      const chartH = height - margin * 2;
+      const candleW = chartW / candles.length;
+
+      const prices = candles.map(c => c.high).concat(candles.map(c => c.low));
+      const max = Math.max(...prices);
+      const min = Math.min(...prices);
+      const scaleY = chartH / (max - min);
+
+      candles.forEach((c, i) => {
+        const x = margin + i * candleW;
+        const yOpen = height - margin - (c.open - min) * scaleY;
+        const yClose = height - margin - (c.close - min) * scaleY;
+        const yHigh = height - margin - (c.high - min) * scaleY;
+        const yLow = height - margin - (c.low - min) * scaleY;
+
+        ctx.strokeStyle = c.close > c.open ? "green" : "red";
+        ctx.beginPath();
+        ctx.moveTo(x + candleW / 2, yHigh);
+        ctx.lineTo(x + candleW / 2, yLow);
+        ctx.stroke();
+
+        ctx.fillStyle = c.close > c.open ? "green" : "red";
+        ctx.fillRect(x, Math.min(yOpen, yClose), candleW - 1, Math.abs(yClose - yOpen));
+      });
+    }
+
+    fetchData();
+    setInterval(fetchData, 60000); // Update every 1 minute
   </script>
 </body>
 </html>
