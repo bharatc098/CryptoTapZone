@@ -54,7 +54,8 @@
     document.addEventListener("mouseup", () => dragging = false);
 
     async function fetchData() {
-      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=100');
+      const url = 'https://corsproxy.io/?https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=100';
+      const res = await fetch(url);
       const data = await res.json();
       candles = data.map(c => ({
         time: c[0],
